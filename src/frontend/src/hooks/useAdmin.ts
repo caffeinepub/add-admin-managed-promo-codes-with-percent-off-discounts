@@ -4,7 +4,7 @@ import { useInternetIdentity } from './useInternetIdentity';
 
 export function useCheckAdminAccess() {
   const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { identity, isInitializing } = useInternetIdentity();
 
   const query = useQuery<boolean>({
     queryKey: ['isAdmin', identity?.getPrincipal().toString()],
@@ -20,15 +20,18 @@ export function useCheckAdminAccess() {
         throw error;
       }
     },
-    enabled: !!actor && !actorFetching && !!identity,
+    enabled: !!actor && !actorFetching && !!identity && !isInitializing,
     retry: 1,
     staleTime: 0, // Always refetch when invalidated
   });
 
+  // Return loading state that properly reflects all dependencies
+  // isLoading should be true while actor is fetching, II is initializing, or query is loading
+  // isFetched should only be true after a successful check has been performed
   return {
     isAdmin: query.data === true,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isLoading: actorFetching || isInitializing || query.isLoading,
+    isFetched: !!actor && !isInitializing && query.isFetched,
     error: query.error,
     refetch: query.refetch,
   };

@@ -1,41 +1,53 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T19:26:38.326Z",
+  "generatedAt": "2026-02-11T22:30:49.572Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 1,
+    "total": 4,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the admin-status check so the Admin Panel button can render and the admin route can be accessed without errors by implementing the backend method that the frontend calls (`isCallerAdmin`).",
+        "summary": "Implement a backend query method `isCallerAdmin : async Bool` that the frontend can call to verify whether the currently authenticated Internet Identity principal is an admin.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
+        "summary": "Change admin authorization to be based on an Internet Identity principal stored and verified in the backend (not based on email), and ensure the chosen admin principal persists across canister upgrades.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Update the frontend navigation so the “Admin Panel” button/link is never shown to non-admin users and does not flash while admin status is still loading; it should only render once the admin check has completed and confirmed the user is an admin.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useAdmin.ts",
           "frontend/src/App.tsx",
-          "frontend/src/hooks/useOrders.ts",
+          "frontend/src/hooks/useAdmin.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useAdmin.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Ensure the `/admin` route remains protected even if a user manually navigates to it (e.g., by editing the hash): unauthenticated users must see an admin login prompt, and authenticated non-admin users must see an access denied screen.",
+        "status": "implemented",
+        "plannedFiles": [
           "frontend/src/components/admin/AdminAccessGate.tsx",
           "frontend/src/pages/admin/AdminOrdersPage.tsx",
           "frontend/src/pages/admin/AdminOrderDetailsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useAdmin.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useOrders.ts",
-          "frontend/src/components/admin/AdminAccessGate.tsx",
-          "frontend/src/pages/admin/AdminOrdersPage.tsx",
-          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx"
+          "frontend/src/components/admin/AdminAccessGate.tsx"
         ]
       }
     ]
@@ -50,9 +62,6 @@
     "frontend/src/App.tsx",
     "frontend/src/components/admin/AdminAccessGate.tsx",
     "frontend/src/hooks/useAdmin.ts",
-    "frontend/src/hooks/useOrders.ts",
-    "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
-    "frontend/src/pages/admin/AdminOrdersPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

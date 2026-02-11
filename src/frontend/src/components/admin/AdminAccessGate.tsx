@@ -11,8 +11,18 @@ interface AdminAccessGateProps {
 }
 
 export default function AdminAccessGate({ children }: AdminAccessGateProps) {
-  const { identity } = useInternetIdentity();
+  const { identity, isInitializing } = useInternetIdentity();
   const { isAdmin, isLoading, isFetched, error, refetch } = useCheckAdminAccess();
+
+  // Show loading state while Internet Identity is initializing
+  if (isInitializing) {
+    return (
+      <div className="container py-12 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Initializing...</p>
+      </div>
+    );
+  }
 
   // Not logged in - show login prompt
   if (!identity) {

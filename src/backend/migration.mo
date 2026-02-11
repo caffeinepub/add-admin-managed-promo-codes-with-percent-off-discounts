@@ -53,21 +53,19 @@ module {
     phone : Text;
   };
 
-  public type OldActor = {
+  public type OldSignature = {
+    idBadgeNumber : Text;
+    photo : ?Storage.ExternalBlob;
+  };
+
+  public type Actor = {
     accessControlState : AccessControl.AccessControlState;
     orders : Map.Map<Nat, Order>;
     nextOrderId : Nat;
     userProfiles : Map.Map<Principal, UserProfile>;
   };
 
-  public type NewActor = {
-    accessControlState : AccessControl.AccessControlState;
-    orders : Map.Map<Nat, Order>;
-    nextOrderId : Nat;
-    userProfiles : Map.Map<Principal, UserProfile>;
-  };
-
-  public func run(old : OldActor) : NewActor {
+  public func run(old : Actor) : Actor {
     old;
   };
 };

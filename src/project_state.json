@@ -1,21 +1,28 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project to add a secured admin panel (Internet Identity) for managing users and orders, plus basic SEO applied across all pages.",
+  "summary": "Implement admin-only access and visibility for the admin panel using an Internet Identity principal stored/verified in the backend.",
   "architectural_notes": [
-    "Admin panel must require Internet Identity authentication.",
-    "Basic SEO should be applied site-wide (all pages)."
+    "Admin authorization will be based on an allowlisted Internet Identity principal and enforced server-side (backend canister), with UI showing the admin panel only after authentication confirms admin status."
   ],
   "known_issues": [
-    "Admin panel page/button does not appear; admin panel currently not working/accessible."
+    "Admin panel button currently flashes/loads then disappears, preventing clicking; also should not be visible to non-admin users."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-rebuild-the-admin-panel-entry-flow-so-the-admin-panel-button-and-page-are-reliably-reachable-show-an-admin-navigation-entry-for-authenticated-users-even-while-admin-status-is-loading-and-ensure-the-admin-page-provides-a-clear-loading-retry-access-denied-state-instead-of-appearing-not-popping-up",
-      "title": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
+      "id": "feature-update-the-frontend-navigation-so-the-admin-panel-button-link-is-never-shown-to-non-admin-users-and-does-not-flash-while-admin-status-is-still-loading-it-should-only-render-once-the-admin-check-has-completed-and-confirmed-the-user-is-an-admin",
+      "title": "Update the frontend navigation so the “Admin Panel” button/link is never shown to non-admin users and does not flash while admin status is still loading; it should only render once the admin check has completed and confirmed the user is an admin.",
       "reqIds": [
-        "REQ-2"
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-admin-route-remains-protected-even-if-a-user-manually-navigates-to-it-e-g-by-editing-the-hash-unauthenticated-users-must-see-an-admin-login-prompt-and-authenticated-non-admin-users-must-see-an-access-denied-screen",
+      "title": "Ensure the `/admin` route remains protected even if a user manually navigates to it (e.g., by editing the hash): unauthenticated users must see an admin login prompt, and authenticated non-admin users must see an access denied screen.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -23,38 +30,28 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add basic SEO across all pages (titles/meta descriptions/social preview)",
+      "summary": "Restrict admin panel button/route to authenticated admin only (admin determined by Internet Identity principal stored/checked in backend) so it never appears for non-admin users.",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Implement admin panel protected by Internet Identity authentication",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Admin user management (full user fields incl. name/email/role; admin can manage users)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Admin order management (view/manage orders with items, totals, status, and all captured order/customer info)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Fix the admin-status check so the Admin Panel button can render and the admin route can be accessed without errors by implementing the backend method that the frontend calls (`isCallerAdmin`).",
+      "summary": "Implement a backend query method `isCallerAdmin : async Bool` that the frontend can call to verify whether the currently authenticated Internet Identity principal is an admin.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Change admin authorization to be based on an Internet Identity principal stored and verified in the backend (not based on email), and ensure the chosen admin principal persists across canister upgrades.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Rebuild and fix Admin Panel visibility and routing (button + page)",
+  "projectName": "Fix admin panel visibility and access using Internet Identity principal (no flashing for non-admins)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

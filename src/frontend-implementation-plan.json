@@ -1,47 +1,53 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Admin Panel navigation visibility and admin route states",
+  "title": "Remove admin link flash and harden /admin route gating",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Make Admin navigation and /admin route reliably reachable with loading, retry, and access-denied states, even when admin status checks fail.",
+      "id": "REQ-3",
+      "summary": "Render the “Admin Panel” navigation entry only after the admin check has completed and confirmed admin status (no flash for non-admins).",
       "acceptanceCriteria": [
-        "After logging in with Internet Identity, the header navigation includes an Admin entry in both desktop and mobile menus: while admin status is still being checked, the Admin entry renders in a loading/disabled state rather than being hidden.",
-        "If admin status check fails (e.g., backend error), the user can still navigate to `#/admin`, and the admin page shows an actionable error with a retry control that re-runs the admin check.",
-        "If the user is authenticated but not an admin, navigating to `#/admin` shows a clear “no permission” message (existing behavior is acceptable) and does not blank-screen.",
-        "If the user is an admin, the Admin Panel button navigates to `#/admin` and the Admin Orders page renders successfully."
+        "When logged out, no Admin Panel entry is visible.",
+        "When logged in as a non-admin, no Admin Panel entry is visible at any time (no flash during loading).",
+        "When logged in as an admin, the Admin Panel entry appears and remains clickable.",
+        "The mobile and desktop navigation follow the same admin-visibility rules."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useAdmin.ts",
-          "operation": "modify",
-          "description": "Improve the admin-check hook to expose explicit UI-friendly states (e.g., loading vs fetched, error details, and a stable refetch action) so navigation and admin pages can render consistent loading/retry/access-denied experiences. Use the selected \"authorization\" component’s frontend guidance for handling authorization/trap errors gracefully. Verify the component's usage instructions before implementing."
-        },
-        {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Rework header navigation rendering so authenticated users always see an Admin entry in desktop and mobile menus: show it disabled with a loading indicator while admin status is being checked; if the admin check errored, keep the Admin entry navigable to `#/admin` (do not hide it). Ensure this wiring applies to both desktop and mobile menus and does not require changes to immutable hooks. Use the selected \"authorization\" component’s UI guidance for access-controlled navigation behavior. Verify the component's usage instructions before implementing."
+          "description": "Update the header navigation gating logic so the Admin Panel button/link is not rendered while admin status is still loading (remove the current behavior that shows it during loading). Gate rendering strictly on: user is authenticated AND the admin check has completed AND isAdmin is true; apply the same rule to both desktop and mobile nav so non-admin users never see a flash."
         },
         {
-          "path": "frontend/src/hooks/useOrders.ts",
+          "path": "frontend/src/hooks/useAdmin.ts",
           "operation": "modify",
-          "description": "Prevent admin-only order fetching from running before admin access is confirmed by adding an optional enable/guard parameter (or equivalent) to the admin orders query hook so Admin pages can avoid triggering unauthorized calls during admin-loading/error states."
-        },
+          "description": "Tighten the admin-check hook's returned state semantics (isLoading/isFetched) so callers can reliably gate UI without transient flashes (e.g., ensure isFetched only becomes true after a check has actually been performed for the current authenticated identity, and isLoading correctly reflects actor dependency + query loading)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Protect the /admin route in the UI with clear states for logged-out, non-admin, and admin users (including manual hash navigation).",
+      "acceptanceCriteria": [
+        "Visiting `#/admin` while logged out shows an “Admin Access Required” login prompt.",
+        "Visiting `#/admin` while logged in as a non-admin shows an “Access Denied” screen.",
+        "Visiting `#/admin` while logged in as an admin shows the admin dashboard content."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/components/admin/AdminAccessGate.tsx",
-          "operation": "create",
-          "description": "Create a small reusable admin-access gate component that renders one of: login-required prompt, loading state, actionable error with retry, access-denied state, or children content. This should consume the admin-check hook state and provide a consistent non-blank experience on admin routes. Use the selected \"authorization\" component’s recommendation to show an access denied screen and to handle backend trap errors gracefully. Verify the component's usage instructions before implementing."
+          "operation": "modify",
+          "description": "Improve AdminAccessGate to avoid incorrect transient states during Internet Identity initialization (e.g., show a neutral loading/initializing state while auth is initializing), then: if unauthenticated show the existing “Admin Access Required” login prompt; if authenticated and admin check completes false show the existing “Access Denied” screen; if admin true render children."
         },
         {
           "path": "frontend/src/pages/admin/AdminOrdersPage.tsx",
           "operation": "modify",
-          "description": "Wrap the Admin Orders page with the new AdminAccessGate to ensure it never blank-screens: show loading while admin status is checking; show a retryable error UI when admin check fails; show clear no-permission for non-admins; only fetch and render orders once admin access is confirmed. Ensure the page remains reachable at `#/admin` even when admin check fails. Verify the component's usage instructions before implementing."
+          "description": "Ensure the admin dashboard content remains wrapped by AdminAccessGate so manual navigation to #/admin is always gated; keep behavior consistent with the updated gate states (logged out prompt, non-admin denied, admin content)."
         },
         {
           "path": "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
           "operation": "modify",
-          "description": "Apply the same AdminAccessGate behavior to the Admin Order Details route so navigation to `#/admin/orders/:id` cannot result in a confusing blank screen during admin-loading/error states; ensure retry and access-denied messaging is clear and consistent with the Admin Orders page. Verify the component's usage instructions before implementing."
+          "description": "Ensure the admin order-details view remains wrapped by AdminAccessGate so manual navigation to #/admin/orders/:id is always gated; keep behavior consistent with the updated gate states (logged out prompt, non-admin denied, admin content)."
         }
       ]
     }

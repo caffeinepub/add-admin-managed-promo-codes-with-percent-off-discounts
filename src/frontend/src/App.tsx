@@ -11,7 +11,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
 import LoginButton from './components/LoginButton';
 import { useCheckAdminAccess } from './hooks/useAdmin';
-import { Menu, X, User, Loader2 } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
 
 type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details';
@@ -69,11 +69,12 @@ function App() {
 
   const isAuthenticated = !!identity;
   
-  // Show admin link when:
+  // Show admin link ONLY when:
   // 1. User is authenticated AND
-  // 2. Either admin check is loading OR user is confirmed admin
-  const showAdminLink = isAuthenticated && (adminCheckLoading || (adminCheckFetched && isAdmin));
-  const adminLinkDisabled = adminCheckLoading;
+  // 2. Admin check has completed (isFetched) AND
+  // 3. User is confirmed admin
+  // This prevents the flash for non-admin users
+  const showAdminLink = isAuthenticated && adminCheckFetched && isAdmin;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -137,11 +138,9 @@ function App() {
             )}
             {showAdminLink && (
               <button
-                onClick={() => !adminLinkDisabled && navigate('/admin')}
-                disabled={adminLinkDisabled}
-                className="text-sm font-medium transition-colors hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                onClick={() => navigate('/admin')}
+                className="text-sm font-medium transition-colors hover:text-primary"
               >
-                {adminLinkDisabled && <Loader2 className="h-3 w-3 animate-spin" />}
                 Admin Panel
               </button>
             )}
@@ -200,11 +199,9 @@ function App() {
               )}
               {showAdminLink && (
                 <button
-                  onClick={() => !adminLinkDisabled && navigate('/admin')}
-                  disabled={adminLinkDisabled}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  onClick={() => navigate('/admin')}
+                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md"
                 >
-                  {adminLinkDisabled && <Loader2 className="h-3 w-3 animate-spin" />}
                   Admin Panel
                 </button>
               )}
