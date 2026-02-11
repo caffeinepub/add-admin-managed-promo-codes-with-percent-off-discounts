@@ -1,53 +1,42 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T22:30:49.572Z",
+  "generatedAt": "2026-02-11T22:42:33.876Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement a backend query method `isCallerAdmin : async Bool` that the frontend can call to verify whether the currently authenticated Internet Identity principal is an admin.",
+        "summary": "Fix the circular authorization dependency that blocks new authenticated users from saving their profile by ensuring any authenticated caller is automatically granted the '#user' role on first login (or first authenticated interaction).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Change admin authorization to be based on an Internet Identity principal stored and verified in the backend (not based on email), and ensure the chosen admin principal persists across canister upgrades.",
+        "summary": "Add a dedicated backend method that the frontend can call after Internet Identity login to ensure the caller has the '#user' role (idempotent; safe to call multiple times), and use it as the primary mechanism to bootstrap the user role.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Update the frontend navigation so the “Admin Panel” button/link is never shown to non-admin users and does not flash while admin status is still loading; it should only render once the admin check has completed and confirmed the user is an admin.",
+        "summary": "On the frontend, automatically invoke the new backend \"ensure user role\" method immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), then invalidate/refetch profile and admin-related React Query caches as needed so UI state updates without requiring a manual page refresh.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/hooks/useEnsureUserRole.ts",
           "frontend/src/App.tsx",
-          "frontend/src/hooks/useAdmin.ts"
+          "frontend/src/hooks/useProfile.ts"
         ],
         "matchedFiles": [
+          "frontend/src/hooks/useEnsureUserRole.ts",
           "frontend/src/App.tsx",
-          "frontend/src/hooks/useAdmin.ts"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Ensure the `/admin` route remains protected even if a user manually navigates to it (e.g., by editing the hash): unauthenticated users must see an admin login prompt, and authenticated non-admin users must see an access denied screen.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/admin/AdminAccessGate.tsx",
-          "frontend/src/pages/admin/AdminOrdersPage.tsx",
-          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/admin/AdminAccessGate.tsx"
+          "frontend/src/hooks/useProfile.ts"
         ]
       }
     ]
@@ -60,8 +49,12 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/components/admin/AdminAccessGate.tsx",
-    "frontend/src/hooks/useAdmin.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useEnsureUserRole.ts",
+    "frontend/src/hooks/useProfile.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

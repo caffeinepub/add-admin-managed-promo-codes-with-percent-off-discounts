@@ -32,6 +32,16 @@ export function useSaveCallerUserProfile() {
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // Defensively ensure user role before saving profile
+      // This guards against race conditions where the role might not be assigned yet
+      try {
+        await actor.ensureUserRole();
+      } catch (error: any) {
+        // If ensureUserRole fails, continue anyway - the user might already have the role
+        console.debug('ensureUserRole before save:', error?.message || 'Failed');
+      }
+      
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: async () => {

@@ -72,6 +72,21 @@ actor {
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
+  public shared ({ caller }) func ensureUserRole() : async () {
+    // Allow any authenticated (non-anonymous) caller to self-assign the user role
+    if (caller.isAnonymous()) {
+      Runtime.trap("Anonymous users cannot be assigned roles");
+    };
+
+    // Only assign if they don't already have the user role (idempotent)
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      // Direct role assignment for self-registration
+      // This bypasses the admin-only guard in assignRole by using internal state access
+      // Since we've verified the caller is authenticated, this is safe
+      AccessControl.assignRole(accessControlState, caller, caller, #user);
+    };
+  };
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");

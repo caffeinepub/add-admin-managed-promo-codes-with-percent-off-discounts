@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure admin access and visibility are correctly gated by the authenticated Internet Identity principal, preventing the Admin Panel link from flashing for non-admin users.
+**Goal:** Remove the first-login authorization deadlock by automatically bootstrapping the authenticated caller with the `#user` role so new users can save their profile immediately after Internet Identity login.
 
 **Planned changes:**
-- Add a backend query method `isCallerAdmin : async Bool` that returns whether the current authenticated caller principal is an admin (returning `false` for non-admins without trapping).
-- Store and verify admin authorization in the backend using Internet Identity principal(s) (not email) and persist this admin source of truth across canister upgrades.
-- Update frontend navigation to only render the “Admin Panel” entry after the admin check completes and confirms admin status (no visible flash for logged-out or non-admin users) on both desktop and mobile.
-- Protect the `/admin` route: show an “Admin Access Required” login prompt when logged out, an “Access Denied” screen when logged in as non-admin, and the admin dashboard only for admins.
+- Backend: Add an idempotent public shared method (e.g., “ensure/register user”) that grants `#user` to the authenticated caller on first authenticated interaction, while rejecting anonymous callers with a clear English unauthorized message.
+- Backend: Update role/bootstrap flow so new authenticated principals no longer hit “Unauthorized: Only users can save profiles” when saving a profile; keep existing admin role checks and the current email-based auto-promotion behavior intact.
+- Frontend: After successful Internet Identity login (and when the authenticated actor becomes available), call the new backend “ensure user role” method, then invalidate/refetch profile and admin-related React Query caches so the UI reflects the new role without a manual refresh (without editing immutable frontend paths).
 
-**User-visible outcome:** Non-admin users never see the Admin Panel link (including during loading), admins consistently see and can click it, and direct navigation to `#/admin` shows the correct prompt/denied state unless the user is an authenticated admin.
+**User-visible outcome:** A brand-new Internet Identity user can log in and successfully save their profile right away (no failed-save error and no page refresh needed), while admins continue to behave as before.

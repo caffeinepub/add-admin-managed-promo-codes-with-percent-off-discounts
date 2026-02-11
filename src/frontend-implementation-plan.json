@@ -1,53 +1,31 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove admin link flash and harden /admin route gating",
+  "title": "Frontend: Ensure '#user' role bootstrap after Internet Identity login",
   "requirements": [
     {
       "id": "REQ-3",
-      "summary": "Render the “Admin Panel” navigation entry only after the admin check has completed and confirmed admin status (no flash for non-admins).",
+      "summary": "Automatically call backend ensureUserRole after II login/actor readiness and refresh React Query caches so profile/admin UI works immediately.",
       "acceptanceCriteria": [
-        "When logged out, no Admin Panel entry is visible.",
-        "When logged in as a non-admin, no Admin Panel entry is visible at any time (no flash during loading).",
-        "When logged in as an admin, the Admin Panel entry appears and remains clickable.",
-        "The mobile and desktop navigation follow the same admin-visibility rules."
+        "After logging in with a brand-new Internet Identity principal, navigating to the Profile page and clicking \"Save Changes\" succeeds (no \"Failed to save profile\" error).",
+        "No manual 'save profile first' or hard refresh is required to make profile-related actions work after first login.",
+        "The frontend does not modify any files under the immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/hooks/useEnsureUserRole.ts",
+          "operation": "create",
+          "description": "Create a dedicated hook that uses the authenticated actor to call backendInterface.ensureUserRole() once per authenticated principal (idempotent), and on success invalidates/refetches React Query caches for profile/admin state (e.g., ['currentUserProfile'], ['isAdmin', principal]). Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
+        },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update the header navigation gating logic so the Admin Panel button/link is not rendered while admin status is still loading (remove the current behavior that shows it during loading). Gate rendering strictly on: user is authenticated AND the admin check has completed AND isAdmin is true; apply the same rule to both desktop and mobile nav so non-admin users never see a flash."
+          "description": "Wire the new useEnsureUserRole hook into the top-level app so it runs immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), without changing immutable auth/actor/provider files. Ensure it triggers cache invalidation/refetch so Profile/Admin UI updates without refresh. Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/hooks/useAdmin.ts",
+          "path": "frontend/src/hooks/useProfile.ts",
           "operation": "modify",
-          "description": "Tighten the admin-check hook's returned state semantics (isLoading/isFetched) so callers can reliably gate UI without transient flashes (e.g., ensure isFetched only becomes true after a check has actually been performed for the current authenticated identity, and isLoading correctly reflects actor dependency + query loading)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Protect the /admin route in the UI with clear states for logged-out, non-admin, and admin users (including manual hash navigation).",
-      "acceptanceCriteria": [
-        "Visiting `#/admin` while logged out shows an “Admin Access Required” login prompt.",
-        "Visiting `#/admin` while logged in as a non-admin shows an “Access Denied” screen.",
-        "Visiting `#/admin` while logged in as an admin shows the admin dashboard content."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/admin/AdminAccessGate.tsx",
-          "operation": "modify",
-          "description": "Improve AdminAccessGate to avoid incorrect transient states during Internet Identity initialization (e.g., show a neutral loading/initializing state while auth is initializing), then: if unauthenticated show the existing “Admin Access Required” login prompt; if authenticated and admin check completes false show the existing “Access Denied” screen; if admin true render children."
-        },
-        {
-          "path": "frontend/src/pages/admin/AdminOrdersPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the admin dashboard content remains wrapped by AdminAccessGate so manual navigation to #/admin is always gated; keep behavior consistent with the updated gate states (logged out prompt, non-admin denied, admin content)."
-        },
-        {
-          "path": "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the admin order-details view remains wrapped by AdminAccessGate so manual navigation to #/admin/orders/:id is always gated; keep behavior consistent with the updated gate states (logged out prompt, non-admin denied, admin content)."
+          "description": "Harden profile-saving flow by ensuring ensureUserRole() is invoked before saveCallerUserProfile when authenticated (defensive against race conditions), and keep/increase cache invalidation/refetch for ['currentUserProfile'] and admin-related keys after successful save. Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEnsureUserRole } from './hooks/useEnsureUserRole';
 import HomePage from './pages/HomePage';
 import OrderPage from './pages/OrderPage';
 import PricesPage from './pages/PricesPage';
@@ -23,6 +24,9 @@ function App() {
   const { identity } = useInternetIdentity();
   const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched } = useCheckAdminAccess();
   const queryClient = useQueryClient();
+
+  // Automatically ensure user role after authentication
+  useEnsureUserRole();
 
   // Simple hash-based routing
   useEffect(() => {

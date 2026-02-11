@@ -2,11 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-frontend-navigation-so-the-admin-panel-button-link-is-never-shown-to-non-admin-users-and-does-not-flash-while-admin-status-is-still-loading-it-should-only-render-once-the-admin-check-has-completed-and-confirmed-the-user-is-an-admin",
-      "featureTitle": "Update the frontend navigation so the “Admin Panel” button/link is never shown to non-admin users and does not flash while admin status is still loading; it should only render once the admin check has completed and confirmed the user is an admin.",
+      "featureId": "feature-on-the-frontend-automatically-invoke-the-new-backend-ensure-user-role-method-immediately-after-a-successful-internet-identity-login-and-whenever-the-authenticated-actor-becomes-available-then-invalidate-refetch-profile-and-admin-related-react-query-caches-as-needed-so-ui-state-updates-without-requiring-a-manual-page-refresh",
+      "featureTitle": "On the frontend, automatically invoke the new backend \"ensure user role\" method immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), then invalidate/refetch profile and admin-related React Query caches as needed so UI state updates without requiring a manual page refresh.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/hooks/useAdmin.ts"
+        "frontend/src/hooks/useEnsureUserRole.ts",
+        "frontend/src/hooks/useProfile.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,26 +20,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-admin-route-remains-protected-even-if-a-user-manually-navigates-to-it-e-g-by-editing-the-hash-unauthenticated-users-must-see-an-admin-login-prompt-and-authenticated-non-admin-users-must-see-an-access-denied-screen",
-      "featureTitle": "Ensure the `/admin` route remains protected even if a user manually navigates to it (e.g., by editing the hash): unauthenticated users must see an admin login prompt, and authenticated non-admin users must see an access denied screen.",
-      "files": [
-        "frontend/src/components/admin/AdminAccessGate.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }
