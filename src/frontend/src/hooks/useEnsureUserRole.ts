@@ -12,6 +12,7 @@ export function useEnsureUserRole() {
   const { identity, isInitializing } = useInternetIdentity();
   const queryClient = useQueryClient();
   const hasRunRef = useRef<string | null>(null);
+  const failedPrincipalsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const ensureRole = async () => {
@@ -22,7 +23,7 @@ export function useEnsureUserRole() {
 
       const principalString = identity.getPrincipal().toString();
 
-      // Skip if already run for this principal
+      // Skip if already run successfully for this principal
       if (hasRunRef.current === principalString) {
         return;
       }
@@ -33,6 +34,9 @@ export function useEnsureUserRole() {
         
         // Mark as completed for this principal
         hasRunRef.current = principalString;
+        
+        // Remove from failed set if it was there
+        failedPrincipalsRef.current.delete(principalString);
 
         // Invalidate and refetch relevant queries
         await queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -45,9 +49,16 @@ export function useEnsureUserRole() {
           exact: true 
         });
       } catch (error: any) {
-        // Silently handle errors - user might already have the role
-        // or the backend might trap for anonymous users
-        console.debug('ensureUserRole:', error?.message || 'Failed');
+        // Log failure once per principal
+        if (!failedPrincipalsRef.current.has(principalString)) {
+          failedPrincipalsRef.current.add(principalString);
+          console.debug(
+            '[ensureUserRole] Failed for principal:',
+            principalString,
+            'Error:',
+            error?.message || String(error)
+          );
+        }
       }
     };
 
@@ -58,6 +69,7 @@ export function useEnsureUserRole() {
   useEffect(() => {
     if (!identity) {
       hasRunRef.current = null;
+      failedPrincipalsRef.current.clear();
     }
   }, [identity]);
 }

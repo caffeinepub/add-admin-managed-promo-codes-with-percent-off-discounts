@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, User, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 import LoginRequiredScreen from '../components/LoginRequiredScreen';
+import { formatErrorMessage, extractBackendError } from '../utils/errorFormatting';
 
 export default function ProfilePage() {
   const { identity, isInitializing } = useInternetIdentity();
@@ -99,6 +100,25 @@ export default function ProfilePage() {
   const isSubmitting = saveProfileMutation.isPending;
   const isValid = formData.name.trim() && formData.email.trim() && formData.phone.trim();
 
+  // Format error message with backend details
+  const errorMessage = saveProfileMutation.isError
+    ? (() => {
+        const backendError = extractBackendError(saveProfileMutation.error);
+        const genericMessage = 'Failed to save profile. Please try again.';
+        
+        if (backendError) {
+          return `${genericMessage} Details: ${backendError}`;
+        }
+        
+        const formattedError = formatErrorMessage(saveProfileMutation.error);
+        if (formattedError && formattedError !== 'An unknown error occurred') {
+          return `${genericMessage} Details: ${formattedError}`;
+        }
+        
+        return genericMessage;
+      })()
+    : '';
+
   return (
     <div className="container py-8 md:py-12 max-w-2xl">
       <div className="mb-8">
@@ -172,8 +192,8 @@ export default function ProfilePage() {
                 {saveProfileMutation.isError && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Failed to save profile. Please try again.
+                    <AlertDescription className="whitespace-pre-wrap break-words">
+                      {errorMessage}
                     </AlertDescription>
                   </Alert>
                 )}

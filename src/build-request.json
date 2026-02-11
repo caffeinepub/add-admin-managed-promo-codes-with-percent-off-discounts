@@ -1,74 +1,73 @@
 {
   "kind": "build_request",
-  "title": "Auto-assign 'user' role on first authenticated login to fix profile-save deadlock",
-  "priority": "high",
+  "title": "Fix profile save/admin access by reliably ensuring '#user' role after Internet Identity login",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the circular authorization dependency that blocks new authenticated users from saving their profile by ensuring any authenticated caller is automatically granted the '#user' role on first login (or first authenticated interaction).",
-      "target": "backend",
+      "text": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Fix the user role issue"
+          "Yes please"
         ]
       },
       "acceptanceCriteria": [
-        "A newly authenticated Internet Identity principal can save a profile successfully without having any pre-existing roles.",
-        "The backend no longer traps with \"Unauthorized: Only users can save profiles\" for a newly authenticated user who has never saved a profile before.",
-        "The backend does not grant the '#user' role to the anonymous principal.",
-        "Existing admin checks/role behavior remain intact, including the email-based auto-promotion logic currently present in saveCallerUserProfile for \"traviscastonguay@gmail.com\"."
+        "After a successful Internet Identity login, ensureUserRole() is invoked once for that principal without requiring a manual page refresh.",
+        "If the actor is recreated (e.g., identity changes), ensureUserRole() is invoked again for the new principal.",
+        "The implementation does not require editing any files under frontend/src/hooks/useInternetIdentity.ts(x) or frontend/src/hooks/useActor.ts (immutable paths)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a dedicated backend method that the frontend can call after Internet Identity login to ensure the caller has the '#user' role (idempotent; safe to call multiple times), and use it as the primary mechanism to bootstrap the user role.",
-      "target": "backend",
+      "text": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-2",
+          "msg-6"
         ],
         "quotes": [
-          "Fix the user role issue"
+          "I tried to change it and this still pops up",
+          "Yes please"
         ]
       },
       "acceptanceCriteria": [
-        "A new public shared backend method exists to \"ensure\"/\"register\" the caller as a user and returns successfully when the caller is already a user.",
-        "Calling the method as an authenticated principal results in the caller having '#user' permission afterward.",
-        "Calling the method as anonymous traps with a clear unauthorized message (English)."
+        "When saveCallerUserProfile fails, the UI shows a human-readable error string derived from the thrown error (e.g., includes 'Unauthorized' or trap message when present).",
+        "The existing generic destructive alert remains, but includes additional details when available.",
+        "No sensitive secrets (e.g., admin token query param values) are ever rendered in the UI."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "On the frontend, automatically invoke the new backend \"ensure user role\" method immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), then invalidate/refetch profile and admin-related React Query caches as needed so UI state updates without requiring a manual page refresh.",
+      "text": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Fix the user role issue"
+          "Yes please"
         ]
       },
       "acceptanceCriteria": [
-        "After logging in with a brand-new Internet Identity principal, navigating to the Profile page and clicking \"Save Changes\" succeeds (no \"Failed to save profile\" error).",
-        "No manual 'save profile first' or hard refresh is required to make profile-related actions work after first login.",
-        "The frontend does not modify any files under the immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
+        "On an ensureUserRole() failure, the browser console includes one labeled debug log entry containing the principal string and the error message (if available).",
+        "EnsureUserRole failure logging does not spam repeatedly for the same principal in a stable session."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister with all logic in backend/main.mo.",
-    "Generate backend/migration.mo changes only if existing stable state must be upgraded (follow conditional migration policy).",
-    "Do not edit frontend files in SYSTEM_CONTEXT.frontend.immutablePaths; compose around them.",
-    "Use English for any user-facing text (errors, messages)."
+    "Backend must remain a single-actor Motoko canister (all logic in backend/main.mo).",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui.",
+    "Do not introduce third-party auth providers; only Internet Identity is supported."
   ],
   "nonGoals": [
-    "Changing the admin authorization model (e.g., switching from email-based admin promotion to principal allowlisting) is out of scope for this fix.",
-    "Redesigning the UI/visual theme is out of scope.",
-    "Adding third-party authentication providers beyond Internet Identity is out of scope."
+    "Changing the backend admin auto-promotion rule (the special email check) or adding new admin management UI.",
+    "Adding new authentication methods or external database/storage systems.",
+    "Implementing real-time updates (WebSockets/push notifications)."
   ],
   "imageRequirements": {
     "required": [],

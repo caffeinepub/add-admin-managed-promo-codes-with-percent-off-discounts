@@ -1,4 +1,5 @@
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, Loader2 } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface LoginButtonProps {
 
 export default function LoginButton({ onLogout }: LoginButtonProps) {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
 
   const isAuthenticated = !!identity;
   const isLoggingIn = loginStatus === 'logging-in';
@@ -15,12 +17,16 @@ export default function LoginButton({ onLogout }: LoginButtonProps) {
   const handleAuth = async () => {
     if (isAuthenticated) {
       await clear();
+      queryClient.clear();
       if (onLogout) {
         onLogout();
       }
     } else {
       try {
         await login();
+        // After successful login, invalidate queries to trigger ensureUserRole
+        await queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+        await queryClient.invalidateQueries({ queryKey: ['isAdmin'] });
       } catch (error: any) {
         console.error('Login error:', error);
         if (error.message === 'User is already authenticated') {

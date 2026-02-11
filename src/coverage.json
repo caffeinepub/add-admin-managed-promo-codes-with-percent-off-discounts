@@ -1,60 +1,63 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T22:42:33.876Z",
+  "generatedAt": "2026-02-11T22:51:23.522Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 1,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the circular authorization dependency that blocks new authenticated users from saving their profile by ensuring any authenticated caller is automatically granted the '#user' role on first login (or first authenticated interaction).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Add a dedicated backend method that the frontend can call after Internet Identity login to ensure the caller has the '#user' role (idempotent; safe to call multiple times), and use it as the primary mechanism to bootstrap the user role.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "On the frontend, automatically invoke the new backend \"ensure user role\" method immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), then invalidate/refetch profile and admin-related React Query caches as needed so UI state updates without requiring a manual page refresh.",
+        "summary": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useEnsureUserRole.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useProfile.ts"
+          "frontend/src/components/LoginButton.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useEnsureUserRole.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useProfile.ts"
+          "frontend/src/components/LoginButton.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/errorFormatting.ts",
+          "frontend/src/pages/ProfilePage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/errorFormatting.ts",
+          "frontend/src/pages/ProfilePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useEnsureUserRole.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useEnsureUserRole.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/components/LoginButton.tsx",
     "frontend/src/hooks/useEnsureUserRole.ts",
-    "frontend/src/hooks/useProfile.ts",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/utils/errorFormatting.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

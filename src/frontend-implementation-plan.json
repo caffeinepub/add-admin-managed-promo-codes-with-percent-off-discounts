@@ -1,31 +1,62 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend: Ensure '#user' role bootstrap after Internet Identity login",
+  "title": "Reliable post-auth #user role assignment and improved profile save diagnostics",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Automatically call backend ensureUserRole after II login/actor readiness and refresh React Query caches so profile/admin UI works immediately.",
+      "id": "REQ-1",
+      "summary": "Trigger ensureUserRole() reliably right after Internet Identity authentication and whenever an authenticated actor becomes available, without modifying immutable auth/actor hooks.",
       "acceptanceCriteria": [
-        "After logging in with a brand-new Internet Identity principal, navigating to the Profile page and clicking \"Save Changes\" succeeds (no \"Failed to save profile\" error).",
-        "No manual 'save profile first' or hard refresh is required to make profile-related actions work after first login.",
-        "The frontend does not modify any files under the immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
+        "After a successful Internet Identity login, ensureUserRole() is invoked once for that principal without requiring a manual page refresh.",
+        "If the actor is recreated (e.g., identity changes), ensureUserRole() is invoked again for the new principal.",
+        "The implementation does not require editing any files under frontend/src/hooks/useInternetIdentity.ts(x) or frontend/src/hooks/useActor.ts (immutable paths)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useEnsureUserRole.ts",
+          "operation": "modify",
+          "description": "Harden the post-auth role-ensuring flow: ensure actor+identity readiness detection triggers a single ensureUserRole() call per principal immediately after authentication and again when the principal changes (actor recreation). Keep the logic independent of immutable hooks. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/LoginButton.tsx",
+          "operation": "modify",
+          "description": "After a successful login action, proactively prompt role initialization by invalidating/refetching relevant react-query caches (e.g., actor-dependent queries), so ensureUserRole() runs without a manual refresh. Do not render or log any secret URL params. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Show backend-derived save error details on the Profile page while retaining the existing generic destructive alert and redacting sensitive values.",
+      "acceptanceCriteria": [
+        "When saveCallerUserProfile fails, the UI shows a human-readable error string derived from the thrown error (e.g., includes 'Unauthorized' or trap message when present).",
+        "The existing generic destructive alert remains, but includes additional details when available.",
+        "No sensitive secrets (e.g., admin token query param values) are ever rendered in the UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/errorFormatting.ts",
           "operation": "create",
-          "description": "Create a dedicated hook that uses the authenticated actor to call backendInterface.ensureUserRole() once per authenticated principal (idempotent), and on success invalidates/refetches React Query caches for profile/admin state (e.g., ['currentUserProfile'], ['isAdmin', principal]). Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
+          "description": "Add a small helper to extract a human-readable message from unknown thrown errors and apply redaction rules (e.g., remove/obfuscate caffeineAdminToken-like values and other obvious secret patterns) before display. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/ProfilePage.tsx",
           "operation": "modify",
-          "description": "Wire the new useEnsureUserRole hook into the top-level app so it runs immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), without changing immutable auth/actor/provider files. Ensure it triggers cache invalidation/refetch so Profile/Admin UI updates without refresh. Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
-        },
+          "description": "Enhance the destructive save error Alert to append sanitized, human-readable details from the mutation error (using the new error formatting helper) while keeping the existing generic 'Failed to save profile' copy. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add a minimal, non-spamming debug log when ensureUserRole() fails after authentication, including principal and error message.",
+      "acceptanceCriteria": [
+        "On an ensureUserRole() failure, the browser console includes one labeled debug log entry containing the principal string and the error message (if available).",
+        "EnsureUserRole failure logging does not spam repeatedly for the same principal in a stable session."
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/hooks/useProfile.ts",
+          "path": "frontend/src/hooks/useEnsureUserRole.ts",
           "operation": "modify",
-          "description": "Harden profile-saving flow by ensuring ensureUserRole() is invoked before saveCallerUserProfile when authenticated (defensive against race conditions), and keep/increase cache invalidation/refetch for ['currentUserProfile'] and admin-related keys after successful save. Use the authorization system’s role bootstrap capability by invoking ensureUserRole. Verify the component's usage instructions before implementing."
+          "description": "Implement once-per-principal failure logging for ensureUserRole(): on failure, emit a single clearly labeled console.debug containing principal string and extracted error message, and prevent repeated logs for the same principal until the principal changes or logout occurs. Verify the component's usage instructions before implementing."
         }
       ]
     }

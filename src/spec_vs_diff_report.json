@@ -1,43 +1,46 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T22:42:33.874Z",
-  "summary": "Backend adds an `ensureUserRole` method and frontend calls it after login and before saving profiles, which likely resolves the profile-save deadlock via the new bootstrap path. However, the backend still enforces `#user` for `saveCallerUserProfile` and `getCallerUserProfile` without any automatic first-interaction grant, and an always-noop migration file was added despite no demonstrated state upgrade need. Diff summary also indicates multiple unrelated frontend changes (legal text removal, styling/theme/config/docs) not requested in the BuildRequest.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Automatically grant the '#user' role to any authenticated caller on first login (or first authenticated interaction) so newly authenticated users can save their profile without pre-existing roles.",
-      "reason": "The backend still traps in `saveCallerUserProfile` and `getCallerUserProfile` when the caller lacks `#user`. The diff shows role assignment only occurs when the new `ensureUserRole()` method is called; there is no shown backend-side automatic grant on first authenticated interaction with existing endpoints (e.g., within `saveCallerUserProfile` or `getCallerUserProfile`).",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-11T22:51:23.519Z",
+  "summary": "REQ-1/2/3 appear implemented: a new `useEnsureUserRole` hook calls `actor.ensureUserRole()` once per authenticated principal (and again if principal changes), logs a single labeled debug message on failure, and Profile save errors now include backend-derived details with redaction. However, the diff summary also indicates multiple unrelated UI/content/styling/deployment changes not requested in the BuildRequest.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Added a migration module even though no stable-state upgrade is evidenced/needed (migration `run` returns `old` unchanged).",
-      "reason": "BuildRequest says to generate `backend/migration.mo` changes only if existing stable state must be upgraded; the added file appears to be a no-op migration.",
+      "description": "Removal of legal notice alert and attestation checkbox from the Order page, plus other wording/content removals on Order Confirmation page",
+      "reason": "Not requested by any REQ; BuildRequest is focused on ensureUserRole invocation and Profile save error feedback",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo"
+        "frontend-file-summaries.txt (OrderPage.tsx, OrderConfirmationPage.tsx entries)"
       ]
     },
     {
-      "description": "Unrelated frontend content/theme/wording changes (e.g., removing legal/novelty disclaimer text, extensive styling/theme updates, deployment guide additions, new asset-path/config utilities).",
-      "reason": "BuildRequest scope is role bootstrap after II login and React Query cache invalidation; the diff summary describes multiple additional frontend changes not requested.",
+      "description": "Broad UI/admin page refactors (wrapping admin pages with AdminAccessGate, payment controls changes, toast notifications)",
+      "reason": "Not requested by any REQ; changes go beyond ensuring #user role and Profile error messaging",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend-file-summaries.txt (AdminOrdersPage.tsx, AdminOrderDetailsPage.tsx, PaymentContactControls.tsx entries)"
+      ]
+    },
+    {
+      "description": "Global styling/Tailwind/theme changes (OKLCH colors, typography scale, focus states, overflow-x guards; Tailwind config updates)",
+      "reason": "Not requested by any REQ",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/index.css, frontend/tailwind.config.js entries)"
+      ]
+    },
+    {
+      "description": "Addition of extensive deployment documentation and multiple new general-purpose frontend utilities/config files unrelated to the requested auth/role fix",
+      "reason": "Not requested by any REQ (scope is auth/role bootstrap + Profile save feedback + debug logging)",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/DEPLOYMENT.md, frontend/src/config.ts, frontend/src/utils/assetPaths.ts, frontend/src/utils/usStates.ts, frontend/src/utils/fileValidation.ts, frontend/src/components/SignaturePad.tsx entries)"
       ]
     }
   ],
-  "confidence": 0.66,
+  "confidence": 0.74,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
+    "frontend/src/components/LoginButton.tsx",
     "frontend/src/hooks/useEnsureUserRole.ts",
-    "frontend/src/hooks/useProfile.ts",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/utils/errorFormatting.ts",
     "project_state.json"
   ]
 }

@@ -2,12 +2,52 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-on-the-frontend-automatically-invoke-the-new-backend-ensure-user-role-method-immediately-after-a-successful-internet-identity-login-and-whenever-the-authenticated-actor-becomes-available-then-invalidate-refetch-profile-and-admin-related-react-query-caches-as-needed-so-ui-state-updates-without-requiring-a-manual-page-refresh",
-      "featureTitle": "On the frontend, automatically invoke the new backend \"ensure user role\" method immediately after a successful Internet Identity login (and whenever the authenticated actor becomes available), then invalidate/refetch profile and admin-related React Query caches as needed so UI state updates without requiring a manual page refresh.",
+      "featureId": "feature-ensure-the-frontend-reliably-calls-the-backend-method-ensureuserrole-immediately-after-a-successful-internet-identity-authentication-and-whenever-an-authenticated-actor-becomes-available-so-newly-authenticated-principals-always-receive-the-user-role-before-profile-save-admin-checks-run",
+      "featureTitle": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useEnsureUserRole.ts",
-        "frontend/src/hooks/useProfile.ts"
+        "frontend/src/components/LoginButton.tsx",
+        "frontend/src/hooks/useEnsureUserRole.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-the-profile-page-save-failure-feedback-by-displaying-the-underlying-backend-error-message-when-available-in-addition-to-the-generic-failed-to-save-profile-message-to-make-role-authorization-failures-diagnosable-during-testing",
+      "featureTitle": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+      "files": [
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/utils/errorFormatting.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-minimal-regression-check-in-code-not-an-external-test-framework-requirement-to-prevent-silent-failures-of-ensureuserrole-log-a-single-clearly-labeled-debug-message-when-ensureuserrole-fails-after-authentication-including-the-principal-string-and-the-error-message-if-any",
+      "featureTitle": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+      "files": [
+        "frontend/src/hooks/useEnsureUserRole.ts"
       ],
       "components": [
         "authorization@4.0.0",
