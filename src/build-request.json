@@ -1,75 +1,66 @@
 {
   "kind": "build_request",
-  "title": "Remove legal and novelty notices from the customer ordering experience",
-  "priority": "normal",
+  "title": "Rebuild and fix Admin Panel visibility and routing (button + page)",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
-      "target": "frontend",
+      "text": "Fix the admin-status check so the Admin Panel button can render and the admin route can be accessed without errors by implementing the backend method that the frontend calls (`isCallerAdmin`).",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "recent-messages-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "Remove all Legal Notice and novelty notice the people ordering I tell them my self"
+          "the admin panel is not working the page wont come up neither will the button rebuild it and fix it"
         ]
       },
       "acceptanceCriteria": [
-        "Home page no longer renders the section titled “Important Legal Notice”.",
-        "Home page no longer includes the novelty/entertainment-only disclaimer sentences (e.g., “novelty… for entertainment… only”, “not intended to be used as real identification”, “Using novelty IDs… is illegal”).",
-        "Page layout remains visually consistent and free of empty gaps where the removed section previously appeared."
+        "Backend canister exposes a query method named `isCallerAdmin : () -> async Bool` (or equivalent in Motoko) that returns whether the caller is an admin based on current access control state.",
+        "`actor.isCallerAdmin()` no longer throws a 'method not found' / candid mismatch error when called from the frontend.",
+        "Calling `isCallerAdmin()` as an anonymous (not logged in) user returns `false` (or traps with a clear authorization message; if it traps, frontend must handle it—see REQ-2)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
+      "text": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "Remove all Legal Notice and novelty notice the people ordering I tell them my self"
+          "the admin panel is not working the page wont come up neither will the button rebuild it and fix it"
         ]
       },
       "acceptanceCriteria": [
-        "Order page no longer shows the warning alert that starts with “Novelty Use Only:”.",
-        "Any attestation checkbox and related copy (lawful-use agreement) is removed from the order form UI.",
-        "Client-side validation no longer blocks submission due to attestation (i.e., no “You must agree to the lawful use attestation to proceed” error).",
-        "Submitting an order still requires the existing required fields (contact/shipping fields, ID info fields, photo, signature) and successfully calls the existing submit order mutation."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages-user-1"
-        ],
-        "quotes": [
-          "Remove all Legal Notice and novelty notice the people ordering I tell them my self"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Prices and confirmation pages do not include legal/novelty disclaimer notice text (e.g., “novelty… for entertainment… only”, “not real government IDs”, “illegal”, “lawful use only”).",
-        "All pages still render without runtime errors and keep their core content (pricing, payment contact info, order ID, next steps)."
+        "After logging in with Internet Identity, the header navigation includes an Admin entry in both desktop and mobile menus: while admin status is still being checked, the Admin entry renders in a loading/disabled state rather than being hidden.",
+        "If admin status check fails (e.g., backend error), the user can still navigate to `#/admin`, and the admin page shows an actionable error with a retry control that re-runs the admin check.",
+        "If the user is authenticated but not an admin, navigating to `#/admin` shows a clear “no permission” message (existing behavior is acceptable) and does not blank-screen.",
+        "If the user is an admin, the Admin Panel button navigates to `#/admin` and the Admin Orders page renders successfully."
       ]
     }
   ],
   "constraints": [
-    "Frontend must not modify files under frontend/src/components/ui (shadcn components are read-only).",
-    "Frontend must not edit immutable hook/bootstrap files listed in SYSTEM_CONTEXT. Compose them instead if needed.",
-    "Do not change backend data model or canister interfaces (no Motoko schema or API changes required for removing UI notices)."
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts or frontend/src/hooks/useActor.ts (immutable paths).",
+    "Backend must remain a single Motoko actor in backend/main.mo; add migration.mo only if required by state changes (not expected for adding a new query method)."
   ],
   "nonGoals": [
-    "Do not change pricing amounts, payment contact information, or accepted payment methods.",
-    "Do not change order submission fields or backend order persistence beyond removing the attestation/disclaimer gating in the UI.",
-    "Do not change admin order management features."
+    "Implementing new admin features beyond making the existing admin orders pages accessible (e.g., full user management UI) is out of scope for this fix.",
+    "Adding or expanding SEO changes is out of scope for this fix request."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

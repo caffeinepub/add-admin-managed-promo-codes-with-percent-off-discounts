@@ -10,9 +10,9 @@ import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   type Time = Time.Time;
 
@@ -90,7 +90,7 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
-    
+
     // Auto-promote to admin if email matches the special admin email
     if (profile.email == "traviscastonguay@gmail.com") {
       // Check if not already admin to avoid unnecessary calls
@@ -98,7 +98,7 @@ actor {
         AccessControl.assignRole(accessControlState, caller, caller, #admin);
       };
     };
-    
+
     userProfiles.add(caller, profile);
   };
 

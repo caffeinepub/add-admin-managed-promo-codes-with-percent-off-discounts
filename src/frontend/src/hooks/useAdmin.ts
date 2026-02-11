@@ -10,15 +10,23 @@ export function useCheckAdminAccess() {
     queryKey: ['isAdmin', identity?.getPrincipal().toString()],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.isCallerAdmin();
+      try {
+        return await actor.isCallerAdmin();
+      } catch (error: any) {
+        // Handle backend trap errors gracefully
+        if (error?.message?.includes('Unauthorized') || error?.message?.includes('trap')) {
+          return false;
+        }
+        throw error;
+      }
     },
     enabled: !!actor && !actorFetching && !!identity,
-    retry: false,
+    retry: 1,
     staleTime: 0, // Always refetch when invalidated
   });
 
   return {
-    isAdmin: query.data || false,
+    isAdmin: query.data === true,
     isLoading: actorFetching || query.isLoading,
     isFetched: !!actor && query.isFetched,
     error: query.error,

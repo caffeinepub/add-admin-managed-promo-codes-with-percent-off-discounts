@@ -1,80 +1,60 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T15:08:31.897Z",
-  "summary": "REQ-2 and part of REQ-3 appear implemented (order-page alert/attestation removal; confirmation-page wording removal). REQ-1 and the prices-page portion of REQ-3 cannot be conclusively verified from the provided diffs. Several unrelated enhancements (admin features, styling, deployment docs, config/utilities) were introduced that were not requested.",
+  "generatedAt": "2026-02-11T19:26:38.324Z",
+  "summary": "REQ-2 (frontend admin entry flow, loading/error/retry/denied states) appears implemented via new AdminAccessGate and updated App navigation logic. REQ-1 (backend `isCallerAdmin` query method) is not evidenced in the provided backend diff summary; the frontend now calls `actor.isCallerAdmin()` via `useCheckAdminAccess`, but no corresponding backend method is shown.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage.",
-      "reason": "HomePage.tsx is truncated and the diff excerpt does not show removal of the section titled “Important Legal Notice” or the specific novelty/legal disclaimer sentences; cannot verify the requirement is satisfied from the provided evidence.",
+      "requirement": "Backend canister exposes a query method named `isCallerAdmin : () -> async Bool` (or equivalent) used by the frontend (`actor.isCallerAdmin()`) so the Admin Panel button/route can be accessed without candid mismatch / method-not-found errors.",
+      "reason": "The diff summary shows frontend code calling `actor.isCallerAdmin()` but the backend changes shown for `backend/main.mo` (truncated) do not include any `isCallerAdmin` method definition; only existing profile/order methods and mixin includes are visible.",
       "evidence": [
-        "frontend/src/pages/HomePage.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content).",
-      "reason": "OrderConfirmationPage is described as having legal/novelty wording removed, but PricesPage.tsx is truncated and does not show whether any prior novelty/legal disclaimer text existed and was removed; cannot fully verify REQ-3 across all mentioned pages from the provided evidence.",
-      "evidence": [
-        "frontend/src/pages/PricesPage.tsx (truncated)",
-        "frontend/src/pages/OrderConfirmationPage.tsx (truncated)"
+        "frontend/src/hooks/useAdmin.ts",
+        "backend/main.mo (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Admin order management UI enhancements (dashboard filtering, stats, payment status badges; detailed order details page; payment contact controls changes).",
-      "reason": "BuildRequest explicitly lists admin order management features as a non-goal; these changes go beyond removing customer-facing legal/novelty notices.",
+      "description": "Added a migration module and wired migration into the backend actor.",
+      "reason": "BuildRequest explicitly says adding `migration.mo` only if required by state changes (not expected for adding a new query method), but `backend/migration.mo` was added and `backend/main.mo` now includes `(with migration = Migration.run)` and imports `Migration`.",
       "evidence": [
-        "frontend-file-summaries.txt: frontend/src/pages/admin/AdminOrdersPage.tsx",
-        "frontend-file-summaries.txt: frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
-        "frontend-file-summaries.txt: frontend/src/components/admin/PaymentContactControls.tsx (truncated)"
+        "backend/migration.mo",
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "description": "Routing/app-level changes related to admin panel visibility, admin verification error handling and retry UI.",
-      "reason": "Not requested by any REQ; unrelated to removing legal/novelty notices from customer ordering experience.",
+      "description": "Auto-promote a user to admin based on matching a hard-coded email address during profile save.",
+      "reason": "Not requested by REQ-1/REQ-2 and constitutes new/expanded admin behavior beyond making existing admin pages accessible.",
       "evidence": [
-        "frontend-file-summaries.txt: frontend/src/App.tsx"
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "description": "Authentication/React Query hook behavior changes (useOrders hardened submitOrder error; useAdmin hook changes).",
-      "reason": "Not requested; requirements only asked to remove attestation gating and keep existing submit behavior, not to change hook semantics or admin checks.",
+      "description": "Introduced broad, unrelated frontend changes (SEO/theme/styling/deployment docs/legal copy removal) beyond admin visibility/routing fix.",
+      "reason": "Non-goals state SEO changes and new admin features are out of scope, yet the diff summary indicates changes/additions such as global styling overhaul, Tailwind config changes, deployment guide, asset path utilities, and removal of legal/disclaimer wording on pages.",
       "evidence": [
-        "frontend-file-summaries.txt: frontend/src/hooks/useOrders.ts",
-        "frontend-file-summaries.txt: frontend/src/hooks/useAdmin.ts"
-      ]
-    },
-    {
-      "description": "Global styling and Tailwind theme changes (OKLCH color system, typography, overflow guards; Inter font and extended color tokens).",
-      "reason": "Not requested; scope was content removal of legal/novelty notices without broader redesign.",
-      "evidence": [
-        "frontend-file-summaries.txt: frontend/src/index.css",
-        "frontend-file-summaries.txt: frontend/tailwind.config.js"
-      ]
-    },
-    {
-      "description": "Added/updated deployment documentation and centralized configuration/utilities for assets and environment (DEPLOYMENT.md, config.ts, assetPaths.ts, usStates.ts, fileValidation.ts, SignaturePad).",
-      "reason": "Not requested; these are broader platform/documentation/utilities additions unrelated to removing legal/novelty notices.",
-      "evidence": [
-        "frontend-file-summaries.txt: frontend/DEPLOYMENT.md",
-        "frontend-file-summaries.txt: frontend/src/config.ts",
-        "frontend-file-summaries.txt: frontend/src/utils/assetPaths.ts",
-        "frontend-file-summaries.txt: frontend/src/utils/usStates.ts",
-        "frontend-file-summaries.txt: frontend/src/utils/fileValidation.ts",
-        "frontend-file-summaries.txt: frontend/src/components/SignaturePad.tsx"
+        "frontend-file-summaries.txt",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js",
+        "frontend/DEPLOYMENT.md",
+        "frontend/src/utils/assetPaths.ts",
+        "frontend/src/pages/OrderPage.tsx",
+        "frontend/src/pages/OrderConfirmationPage.tsx"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.74,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/OrderConfirmationPage.tsx",
-    "frontend/src/pages/OrderPage.tsx",
-    "frontend/src/pages/PricesPage.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/admin/AdminAccessGate.tsx",
+    "frontend/src/hooks/useAdmin.ts",
+    "frontend/src/hooks/useOrders.ts",
+    "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+    "frontend/src/pages/admin/AdminOrdersPage.tsx",
     "project_state.json"
   ]
 }

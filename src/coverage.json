@@ -1,61 +1,58 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T15:08:31.900Z",
+  "generatedAt": "2026-02-11T19:26:38.326Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/HomePage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/HomePage.tsx"
-        ]
+        "summary": "Fix the admin-status check so the Admin Panel button can render and the admin route can be accessed without errors by implementing the backend method that the frontend calls (`isCallerAdmin`).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
+        "summary": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/OrderPage.tsx"
+          "frontend/src/hooks/useAdmin.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useOrders.ts",
+          "frontend/src/components/admin/AdminAccessGate.tsx",
+          "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/OrderPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/PricesPage.tsx",
-          "frontend/src/pages/OrderConfirmationPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/PricesPage.tsx",
-          "frontend/src/pages/OrderConfirmationPage.tsx"
+          "frontend/src/hooks/useAdmin.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useOrders.ts",
+          "frontend/src/components/admin/AdminAccessGate.tsx",
+          "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/OrderConfirmationPage.tsx",
-    "frontend/src/pages/OrderPage.tsx",
-    "frontend/src/pages/PricesPage.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/admin/AdminAccessGate.tsx",
+    "frontend/src/hooks/useAdmin.ts",
+    "frontend/src/hooks/useOrders.ts",
+    "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+    "frontend/src/pages/admin/AdminOrdersPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

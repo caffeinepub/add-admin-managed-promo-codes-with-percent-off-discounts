@@ -1,32 +1,21 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "summary": "Project to add a secured admin panel (Internet Identity) for managing users and orders, plus basic SEO applied across all pages.",
+  "architectural_notes": [
+    "Admin panel must require Internet Identity authentication.",
+    "Basic SEO should be applied site-wide (all pages)."
+  ],
+  "known_issues": [
+    "Admin panel page/button does not appear; admin panel currently not working/accessible."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-the-important-legal-notice-section-and-any-other-legal-novelty-disclaimer-messaging-from-the-marketing-homepage-so-customers-are-not-shown-legal-novelty-notices-while-browsing",
-      "title": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-legal-novelty-notice-ui-from-the-order-page-including-the-warning-alert-and-the-lawful-use-attestation-requirement-so-users-can-submit-an-order-without-acknowledging-a-novelty-legal-disclaimer",
-      "title": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
+      "id": "feature-rebuild-the-admin-panel-entry-flow-so-the-admin-panel-button-and-page-are-reliably-reachable-show-an-admin-navigation-entry-for-authenticated-users-even-while-admin-status-is-loading-and-ensure-the-admin-page-provides-a-clear-loading-retry-access-denied-state-instead-of-appearing-not-popping-up",
+      "title": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-remove-legal-novelty-notice-wording-from-other-customer-facing-ordering-flow-pages-where-it-appears-e-g-prices-page-and-order-confirmation-content-ensuring-customers-are-not-shown-legal-novelty-disclaimer-notices-anywhere-in-the-flow",
-      "title": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
@@ -34,12 +23,38 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Remove all Legal Notice and novelty notice from the ordering flow (user will tell customers themselves)",
+      "summary": "Add basic SEO across all pages (titles/meta descriptions/social preview)",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement admin panel protected by Internet Identity authentication",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Admin user management (full user fields incl. name/email/role; admin can manage users)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Admin order management (view/manage orders with items, totals, status, and all captured order/customer info)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Fix the admin-status check so the Admin Panel button can render and the admin route can be accessed without errors by implementing the backend method that the frontend calls (`isCallerAdmin`).",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Remove legal and novelty notices from the customer ordering experience",
+  "projectName": "Rebuild and fix Admin Panel visibility and routing (button + page)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

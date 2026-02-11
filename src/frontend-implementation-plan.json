@@ -1,58 +1,47 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove legal/novelty notices from customer ordering flow UI",
+  "title": "Fix Admin Panel navigation visibility and admin route states",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Remove the “Important Legal Notice” section and other legal/novelty disclaimer messaging from the marketing homepage while keeping layout intact.",
-      "acceptanceCriteria": [
-        "Home page no longer renders the section titled “Important Legal Notice”.",
-        "Home page no longer includes the novelty/entertainment-only disclaimer sentences (e.g., “novelty… for entertainment… only”, “not intended to be used as real identification”, “Using novelty IDs… is illegal”).",
-        "Page layout remains visually consistent and free of empty gaps where the removed section previously appeared."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/HomePage.tsx",
-          "operation": "modify",
-          "description": "Remove the entire “Important Legal Notice” section and delete/rewrite homepage copy blocks and cards that contain novelty/legal disclaimer language (e.g., hero subtitle and “Novelty Only”/About copy), ensuring the remaining sections reflow cleanly with no empty spacing."
-        }
-      ]
-    },
-    {
       "id": "REQ-2",
-      "summary": "Remove legal/novelty notice UI and lawful-use attestation gating from the order page so users can submit orders without acknowledging disclaimers.",
+      "summary": "Make Admin navigation and /admin route reliably reachable with loading, retry, and access-denied states, even when admin status checks fail.",
       "acceptanceCriteria": [
-        "Order page no longer shows the warning alert that starts with “Novelty Use Only:”.",
-        "Any attestation checkbox and related copy (lawful-use agreement) is removed from the order form UI.",
-        "Client-side validation no longer blocks submission due to attestation (i.e., no “You must agree to the lawful use attestation to proceed” error).",
-        "Submitting an order still requires the existing required fields (contact/shipping fields, ID info fields, photo, signature) and successfully calls the existing submit order mutation."
+        "After logging in with Internet Identity, the header navigation includes an Admin entry in both desktop and mobile menus: while admin status is still being checked, the Admin entry renders in a loading/disabled state rather than being hidden.",
+        "If admin status check fails (e.g., backend error), the user can still navigate to `#/admin`, and the admin page shows an actionable error with a retry control that re-runs the admin check.",
+        "If the user is authenticated but not an admin, navigating to `#/admin` shows a clear “no permission” message (existing behavior is acceptable) and does not blank-screen.",
+        "If the user is an admin, the Admin Panel button navigates to `#/admin` and the Admin Orders page renders successfully."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/OrderPage.tsx",
+          "path": "frontend/src/hooks/useAdmin.ts",
           "operation": "modify",
-          "description": "Remove the warning alert block containing “Novelty Use Only:” messaging; remove the lawful-use attestation checkbox UI and all related state/validation/error handling (attestationChecked, fieldErrors.attestation, and submission blocking), while preserving required-field validation for contact/shipping, ID info, photo, and signature and keeping the existing submit order mutation call unchanged."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Remove legal/novelty disclaimer wording from other customer-facing ordering-flow pages (prices and order confirmation) while preserving core content.",
-      "acceptanceCriteria": [
-        "Prices and confirmation pages do not include legal/novelty disclaimer notice text (e.g., “novelty… for entertainment… only”, “not real government IDs”, “illegal”, “lawful use only”).",
-        "All pages still render without runtime errors and keep their core content (pricing, payment contact info, order ID, next steps)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/PricesPage.tsx",
-          "operation": "modify",
-          "description": "Remove or rewrite customer-facing text that includes novelty/legal disclaimer language (e.g., FAQ entry about “Are these real IDs?” and any “novelty” disclaimers), while keeping pricing amounts, payment contact information, and accepted payment methods unchanged."
+          "description": "Improve the admin-check hook to expose explicit UI-friendly states (e.g., loading vs fetched, error details, and a stable refetch action) so navigation and admin pages can render consistent loading/retry/access-denied experiences. Use the selected \"authorization\" component’s frontend guidance for handling authorization/trap errors gracefully. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/OrderConfirmationPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Remove or rewrite any legal/novelty disclaimer wording in confirmation content (including “novelty” mentions and any disclaimer-like phrasing) while preserving the order ID display, payment contact instructions, and next-steps timeline; ensure the page still renders without runtime errors."
+          "description": "Rework header navigation rendering so authenticated users always see an Admin entry in desktop and mobile menus: show it disabled with a loading indicator while admin status is being checked; if the admin check errored, keep the Admin entry navigable to `#/admin` (do not hide it). Ensure this wiring applies to both desktop and mobile menus and does not require changes to immutable hooks. Use the selected \"authorization\" component’s UI guidance for access-controlled navigation behavior. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useOrders.ts",
+          "operation": "modify",
+          "description": "Prevent admin-only order fetching from running before admin access is confirmed by adding an optional enable/guard parameter (or equivalent) to the admin orders query hook so Admin pages can avoid triggering unauthorized calls during admin-loading/error states."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminAccessGate.tsx",
+          "operation": "create",
+          "description": "Create a small reusable admin-access gate component that renders one of: login-required prompt, loading state, actionable error with retry, access-denied state, or children content. This should consume the admin-check hook state and provide a consistent non-blank experience on admin routes. Use the selected \"authorization\" component’s recommendation to show an access denied screen and to handle backend trap errors gracefully. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "operation": "modify",
+          "description": "Wrap the Admin Orders page with the new AdminAccessGate to ensure it never blank-screens: show loading while admin status is checking; show a retryable error UI when admin check fails; show clear no-permission for non-admins; only fetch and render orders once admin access is confirmed. Ensure the page remains reachable at `#/admin` even when admin check fails. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Apply the same AdminAccessGate behavior to the Admin Order Details route so navigation to `#/admin/orders/:id` cannot result in a confusing blank screen during admin-loading/error states; ensure retry and access-denied messaging is clear and consistent with the Admin Orders page. Verify the component's usage instructions before implementing."
         }
       ]
     }

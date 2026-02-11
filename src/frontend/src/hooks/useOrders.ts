@@ -63,7 +63,7 @@ export function useSubmitOrder() {
   });
 }
 
-export function useGetAllOrders() {
+export function useGetAllOrders(enabled: boolean = true) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Order[]>({
@@ -72,7 +72,7 @@ export function useGetAllOrders() {
       if (!actor) return [];
       return actor.getAllOrders();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !isFetching && enabled,
   });
 }
 

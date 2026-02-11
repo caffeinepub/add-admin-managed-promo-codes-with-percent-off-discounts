@@ -11,10 +11,8 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
 import LoginButton from './components/LoginButton';
 import { useCheckAdminAccess } from './hooks/useAdmin';
-import { Menu, X, User, AlertCircle, RefreshCw } from 'lucide-react';
+import { Menu, X, User, Loader2 } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 
 type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details';
 
@@ -23,7 +21,7 @@ function App() {
   const [orderId, setOrderId] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { identity } = useInternetIdentity();
-  const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched, error: adminCheckError, refetch: refetchAdminStatus } = useCheckAdminAccess();
+  const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched } = useCheckAdminAccess();
   const queryClient = useQueryClient();
 
   // Simple hash-based routing
@@ -69,13 +67,13 @@ function App() {
     queryClient.clear();
   };
 
-  const handleRetryAdminCheck = async () => {
-    await refetchAdminStatus();
-  };
-
   const isAuthenticated = !!identity;
-  const showAdminPanel = isAuthenticated && adminCheckFetched && isAdmin && !adminCheckLoading;
-  const showAdminError = isAuthenticated && adminCheckFetched && adminCheckError && !adminCheckLoading;
+  
+  // Show admin link when:
+  // 1. User is authenticated AND
+  // 2. Either admin check is loading OR user is confirmed admin
+  const showAdminLink = isAuthenticated && (adminCheckLoading || (adminCheckFetched && isAdmin));
+  const adminLinkDisabled = adminCheckLoading;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -137,11 +135,13 @@ function App() {
                 </button>
               </>
             )}
-            {showAdminPanel && (
+            {showAdminLink && (
               <button
-                onClick={() => navigate('/admin')}
-                className="text-sm font-medium transition-colors hover:text-primary"
+                onClick={() => !adminLinkDisabled && navigate('/admin')}
+                disabled={adminLinkDisabled}
+                className="text-sm font-medium transition-colors hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
+                {adminLinkDisabled && <Loader2 className="h-3 w-3 animate-spin" />}
                 Admin Panel
               </button>
             )}
@@ -198,11 +198,13 @@ function App() {
                   </button>
                 </>
               )}
-              {showAdminPanel && (
+              {showAdminLink && (
                 <button
-                  onClick={() => navigate('/admin')}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md"
+                  onClick={() => !adminLinkDisabled && navigate('/admin')}
+                  disabled={adminLinkDisabled}
+                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
+                  {adminLinkDisabled && <Loader2 className="h-3 w-3 animate-spin" />}
                   Admin Panel
                 </button>
               )}
@@ -210,31 +212,6 @@ function App() {
                 <LoginButton onLogout={handleLogout} />
               </div>
             </nav>
-          </div>
-        )}
-
-        {/* Admin Check Error Alert */}
-        {showAdminError && (
-          <div className="border-t border-border/40 bg-destructive/5">
-            <div className="container py-3">
-              <Alert variant="destructive" className="border-destructive/50">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between gap-4">
-                  <span className="text-sm">
-                    Unable to verify admin status. Please try again.
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRetryAdminCheck}
-                    className="flex-shrink-0"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    Retry
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
           </div>
         )}
       </header>

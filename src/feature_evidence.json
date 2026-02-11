@@ -2,30 +2,15 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-important-legal-notice-section-and-any-other-legal-novelty-disclaimer-messaging-from-the-marketing-homepage-so-customers-are-not-shown-legal-novelty-notices-while-browsing",
-      "featureTitle": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
+      "featureId": "feature-rebuild-the-admin-panel-entry-flow-so-the-admin-panel-button-and-page-are-reliably-reachable-show-an-admin-navigation-entry-for-authenticated-users-even-while-admin-status-is-loading-and-ensure-the-admin-page-provides-a-clear-loading-retry-access-denied-state-instead-of-appearing-not-popping-up",
+      "featureTitle": "Rebuild the Admin Panel entry flow so the Admin Panel button and page are reliably reachable: show an admin navigation entry for authenticated users even while admin status is loading, and ensure the admin page provides a clear loading / retry / access-denied state instead of appearing \"not popping up\".",
       "files": [
-        "frontend/src/pages/HomePage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-remove-legal-novelty-notice-ui-from-the-order-page-including-the-warning-alert-and-the-lawful-use-attestation-requirement-so-users-can-submit-an-order-without-acknowledging-a-novelty-legal-disclaimer",
-      "featureTitle": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
-      "files": [
-        "frontend/src/pages/OrderPage.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/admin/AdminAccessGate.tsx",
+        "frontend/src/hooks/useAdmin.ts",
+        "frontend/src/hooks/useOrders.ts",
+        "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+        "frontend/src/pages/admin/AdminOrdersPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -38,27 +23,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-remove-legal-novelty-notice-wording-from-other-customer-facing-ordering-flow-pages-where-it-appears-e-g-prices-page-and-order-confirmation-content-ensuring-customers-are-not-shown-legal-novelty-disclaimer-notices-anywhere-in-the-flow",
-      "featureTitle": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
-      "files": [
-        "frontend/src/pages/OrderConfirmationPage.tsx",
-        "frontend/src/pages/PricesPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useGetAllOrders } from '../../hooks/useOrders';
 import { useCheckAdminAccess } from '../../hooks/useAdmin';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import AdminAccessGate from '../../components/admin/AdminAccessGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, Search, Filter, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Package, Search, Filter } from 'lucide-react';
 import type { PaymentContactStatus, Order } from '../../backend';
 
 interface AdminOrdersPageProps {
   onOrderClick: (orderId: string) => void;
 }
 
-export default function AdminOrdersPage({ onOrderClick }: AdminOrdersPageProps) {
-  const { identity } = useInternetIdentity();
-  const { isAdmin, isLoading: adminLoading } = useCheckAdminAccess();
-  const { data: orders, isLoading: ordersLoading } = useGetAllOrders();
+function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
+  const { isAdmin } = useCheckAdminAccess();
+  const { data: orders, isLoading: ordersLoading } = useGetAllOrders(isAdmin);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'shipped'>('all');
@@ -94,36 +92,10 @@ export default function AdminOrdersPage({ onOrderClick }: AdminOrdersPageProps) 
     }
   };
 
-  if (!identity) {
-    return (
-      <div className="container py-12 max-w-4xl">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Please log in to access the admin panel.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (adminLoading || ordersLoading) {
+  if (ordersLoading) {
     return (
       <div className="container py-12 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="container py-12 max-w-4xl">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You do not have permission to access the admin panel.
-          </AlertDescription>
-        </Alert>
       </div>
     );
   }
@@ -161,82 +133,65 @@ export default function AdminOrdersPage({ onOrderClick }: AdminOrdersPageProps) 
         </Card>
       </div>
 
-      {/* Orders Table */}
-      <Card>
+      {/* Filters and Search */}
+      <Card className="mb-6">
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl">Orders</CardTitle>
-              <CardDescription>View and manage all customer orders</CardDescription>
-            </div>
-          </div>
-
-          {/* Search and Filter Controls */}
-          <div className="flex flex-col gap-4 pt-4">
-            <div className="flex-1">
-              <Label htmlFor="search" className="sr-only">Search orders</Label>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters & Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="search">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="Search by customer name, email, or order ID..."
+                  placeholder="Name, email, or order ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
                 />
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Label htmlFor="status-filter" className="sr-only">Filter by status</Label>
-                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-                  <SelectTrigger id="status-filter">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Order status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Orders</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="payment-filter" className="sr-only">Filter by payment status</Label>
-                <Select value={paymentFilter} onValueChange={(value: any) => setPaymentFilter(value)}>
-                  <SelectTrigger id="payment-filter">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Payment status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Payment Status</SelectItem>
-                    <SelectItem value="notContacted">Not Contacted</SelectItem>
-                    <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="paymentReceived">Payment Received</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="status-filter">Order Status</Label>
+              <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                <SelectTrigger id="status-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-filter">Payment Status</Label>
+              <Select value={paymentFilter} onValueChange={(value: any) => setPaymentFilter(value)}>
+                <SelectTrigger id="payment-filter">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payment Statuses</SelectItem>
+                  <SelectItem value="notContacted">Not Contacted</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="paymentReceived">Payment Received</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {!hasOrders ? (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Orders Yet</h3>
+          {isFiltering && (
+            <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Orders will appear here once customers start placing them.
-              </p>
-            </div>
-          ) : !hasFilteredResults ? (
-            <div className="text-center py-12">
-              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Matching Orders</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                No orders match your current search or filter criteria.
+                Showing {filteredOrders.length} of {orders?.length || 0} orders
               </p>
               <Button
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSearchQuery('');
                   setStatusFilter('all');
@@ -246,40 +201,58 @@ export default function AdminOrdersPage({ onOrderClick }: AdminOrdersPageProps) 
                 Clear Filters
               </Button>
             </div>
-          ) : (
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Orders
+          </CardTitle>
+          <CardDescription>
+            {hasFilteredResults
+              ? `${filteredOrders.length} order${filteredOrders.length === 1 ? '' : 's'} found`
+              : hasOrders
+              ? 'No orders match your filters'
+              : 'No orders yet'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {hasFilteredResults ? (
             <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Order ID</TableHead>
+                    <TableHead>Order ID</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead className="hidden md:table-cell">Email</TableHead>
-                    <TableHead className="hidden lg:table-cell">Phone</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Payment</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => (
-                    <TableRow key={order.id.toString()} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell className="font-mono text-sm">{order.id.toString()}</TableCell>
-                      <TableCell className="font-medium">{order.customerName}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {order.email}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {order.phone}
-                      </TableCell>
+                    <TableRow key={order.id.toString()}>
+                      <TableCell className="font-medium">#{order.id.toString()}</TableCell>
+                      <TableCell>{order.customerName}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{order.email}</TableCell>
                       <TableCell>
-                        <Badge variant={order.status === 'pending' ? 'default' : 'secondary'}>
-                          {order.status === 'pending' ? 'Pending' : 'Shipped'}
+                        <Badge variant={order.status === 'shipped' ? 'secondary' : 'default'}>
+                          {order.status === 'shipped' ? 'Shipped' : 'Pending'}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getPaymentStatusVariant(order.paymentContactStatus)}>
                           {getPaymentStatusLabel(order.paymentContactStatus)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(Number(order.createdTime) / 1_000_000).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -295,15 +268,38 @@ export default function AdminOrdersPage({ onOrderClick }: AdminOrdersPageProps) 
                 </TableBody>
               </Table>
             </div>
-          )}
-
-          {hasFilteredResults && isFiltering && (
-            <div className="mt-4 text-sm text-muted-foreground text-center">
-              Showing {filteredOrders.length} of {stats.total} orders
+          ) : (
+            <div className="text-center py-12">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                {hasOrders ? 'No orders match your current filters.' : 'No orders have been placed yet.'}
+              </p>
+              {isFiltering && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                    setPaymentFilter('all');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AdminOrdersPage(props: AdminOrdersPageProps) {
+  return (
+    <AdminAccessGate>
+      <AdminOrdersContent {...props} />
+    </AdminAccessGate>
   );
 }
