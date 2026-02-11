@@ -6,21 +6,24 @@ import OrderPage from './pages/OrderPage';
 import PricesPage from './pages/PricesPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import MyOrdersPage from './pages/MyOrdersPage';
+import ProfilePage from './pages/ProfilePage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
 import LoginButton from './components/LoginButton';
 import { useCheckAdminAccess } from './hooks/useAdmin';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, AlertCircle, RefreshCw } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
-type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'admin' | 'admin-order-details';
+type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState<Route>('home');
   const [orderId, setOrderId] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { identity } = useInternetIdentity();
-  const { isAdmin, isLoading: adminCheckLoading } = useCheckAdminAccess();
+  const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched, error: adminCheckError, refetch: refetchAdminStatus } = useCheckAdminAccess();
   const queryClient = useQueryClient();
 
   // Simple hash-based routing
@@ -36,6 +39,8 @@ function App() {
       } else if (hash === '/my-orders') {
         setCurrentRoute('my-orders');
         setOrderId('');
+      } else if (hash === '/profile') {
+        setCurrentRoute('profile');
       } else if (hash.startsWith('/admin/orders/')) {
         setCurrentRoute('admin-order-details');
         setOrderId(hash.split('/')[3] || '');
@@ -64,30 +69,35 @@ function App() {
     queryClient.clear();
   };
 
+  const handleRetryAdminCheck = async () => {
+    await refetchAdminStatus();
+  };
+
   const isAuthenticated = !!identity;
-  const showAdminPanel = isAuthenticated && isAdmin && !adminCheckLoading;
+  const showAdminPanel = isAuthenticated && adminCheckFetched && isAdmin && !adminCheckLoading;
+  const showAdminError = isAuthenticated && adminCheckFetched && adminCheckError && !adminCheckLoading;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="container flex h-16 items-center justify-between gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 md:flex-initial">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0"
             >
               <img
                 src={getAssetUrl('assets/generated/falcon-ids-logo-light.dim_512x512.png')}
                 alt="Falcon IDs"
-                className="h-10 w-10 dark:hidden"
+                className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 dark:hidden"
               />
               <img
                 src={getAssetUrl('assets/generated/falcon-ids-logo-dark.dim_512x512.png')}
                 alt="Falcon IDs"
-                className="h-10 w-10 hidden dark:block"
+                className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 hidden dark:block"
               />
-              <span className="text-xl font-bold tracking-tight">Falcon IDs</span>
+              <span className="text-lg sm:text-xl font-bold tracking-tight truncate">Falcon IDs</span>
             </button>
           </div>
 
@@ -112,12 +122,20 @@ function App() {
               Prices
             </button>
             {isAuthenticated && (
-              <button
-                onClick={() => navigate('/my-orders')}
-                className="text-sm font-medium transition-colors hover:text-primary"
-              >
-                My Orders
-              </button>
+              <>
+                <button
+                  onClick={() => navigate('/my-orders')}
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  My Orders
+                </button>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  Profile
+                </button>
+              </>
             )}
             {showAdminPanel && (
               <button
@@ -132,8 +150,10 @@ function App() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 -mr-2 touch-manipulation"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -145,34 +165,43 @@ function App() {
             <nav className="container py-4 flex flex-col gap-4">
               <button
                 onClick={() => navigate('/')}
-                className="text-sm font-medium transition-colors hover:text-primary text-left"
+                className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation"
               >
                 Home
               </button>
               <button
                 onClick={() => navigate('/order')}
-                className="text-sm font-medium transition-colors hover:text-primary text-left"
+                className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation"
               >
                 Order
               </button>
               <button
                 onClick={() => navigate('/prices')}
-                className="text-sm font-medium transition-colors hover:text-primary text-left"
+                className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation"
               >
                 Prices
               </button>
               {isAuthenticated && (
-                <button
-                  onClick={() => navigate('/my-orders')}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left"
-                >
-                  My Orders
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate('/my-orders')}
+                    className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation"
+                  >
+                    My Orders
+                  </button>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation flex items-center gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                  </button>
+                </>
               )}
               {showAdminPanel && (
                 <button
                   onClick={() => navigate('/admin')}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left"
+                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md"
                 >
                   Admin Panel
                 </button>
@@ -181,6 +210,31 @@ function App() {
                 <LoginButton onLogout={handleLogout} />
               </div>
             </nav>
+          </div>
+        )}
+
+        {/* Admin Check Error Alert */}
+        {showAdminError && (
+          <div className="border-t border-border/40 bg-destructive/5">
+            <div className="container py-3">
+              <Alert variant="destructive" className="border-destructive/50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between gap-4">
+                  <span className="text-sm">
+                    Unable to verify admin status. Please try again.
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRetryAdminCheck}
+                    className="flex-shrink-0"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
           </div>
         )}
       </header>
@@ -192,6 +246,7 @@ function App() {
         {currentRoute === 'prices' && <PricesPage />}
         {currentRoute === 'order-confirmation' && <OrderConfirmationPage orderId={orderId} />}
         {currentRoute === 'my-orders' && <MyOrdersPage />}
+        {currentRoute === 'profile' && <ProfilePage />}
         {currentRoute === 'admin' && <AdminOrdersPage onOrderClick={(id) => navigate(`/admin/orders/${id}`)} />}
         {currentRoute === 'admin-order-details' && (
           <AdminOrderDetailsPage orderId={orderId} onBack={() => navigate('/admin')} />
@@ -202,10 +257,10 @@ function App() {
       <footer className="border-t border-border/40 bg-muted/30">
         <div className="container py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground text-center md:text-left">
               © {new Date().getFullYear()} Falcon IDs. All rights reserved.
             </div>
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <div className="text-sm text-muted-foreground flex items-center gap-2 text-center md:text-left flex-wrap justify-center">
               Built with <span className="text-red-500">♥</span> using{' '}
               <a
                 href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(

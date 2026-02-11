@@ -43,7 +43,7 @@ export default function PricesPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-              <span className="text-base">2 identical copies of your novelty ID</span>
+              <span className="text-base">2 identical copies of your ID</span>
             </div>
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
@@ -149,7 +149,7 @@ export default function PricesPage() {
               </p>
             </div>
             <p className="text-muted-foreground">
-              Once payment is confirmed, we'll begin production of your novelty IDs and ship them to your provided address.
+              Once payment is confirmed, we'll begin production of your IDs and ship them to your provided address.
             </p>
           </div>
         </CardContent>
@@ -197,12 +197,11 @@ export default function PricesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Are these real IDs?</CardTitle>
+              <CardTitle className="text-lg">What states are available?</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                No. All our products are novelty items for entertainment purposes only. They are not real government-issued 
-                identification and must not be used as such. Using novelty IDs to misrepresent identity is illegal.
+                We offer designs for all 50 US states. You can select your preferred state design during the order process.
               </p>
             </CardContent>
           </Card>

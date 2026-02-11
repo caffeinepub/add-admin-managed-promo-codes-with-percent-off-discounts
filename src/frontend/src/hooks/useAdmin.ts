@@ -14,11 +14,14 @@ export function useCheckAdminAccess() {
     },
     enabled: !!actor && !actorFetching && !!identity,
     retry: false,
+    staleTime: 0, // Always refetch when invalidated
   });
 
   return {
     isAdmin: query.data || false,
     isLoading: actorFetching || query.isLoading,
+    isFetched: !!actor && query.isFetched,
     error: query.error,
+    refetch: query.refetch,
   };
 }

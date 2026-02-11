@@ -3,6 +3,15 @@
 # If you encounter 500 errors, you can safely delete this file
 
 # ============================================
+# IMPORTANT NOTES
+# ============================================
+# - This app uses HASH-BASED ROUTING (e.g., falconids.com/#/order)
+# - NO SPA rewrite rules needed - hash routing works without server config
+# - This file only provides optional performance optimizations
+# - If any directive causes errors, remove it or delete this entire file
+# - The app will work fine without this file
+
+# ============================================
 # GZIP Compression
 # ============================================
 # Compress text-based files for faster transfer
@@ -86,13 +95,30 @@
 # Error Documents (Optional)
 # ============================================
 # Uncomment to use custom error pages
+# Note: Not needed for hash routing, but can improve UX
 # ErrorDocument 404 /index.html
 # ErrorDocument 500 /index.html
 
 # ============================================
-# Notes
+# TROUBLESHOOTING
 # ============================================
-# This configuration is designed for pure static hosting
-# It does NOT include SPA rewrite rules because this app uses hash-based routing
-# If any directive causes errors, you can safely remove it or delete this file
-# The app will work fine without this file - it just won't have these optimizations
+# If you see 500 Internal Server Error:
+# 1. Delete this .htaccess file (app works without it)
+# 2. Or comment out sections one by one to find the problematic directive
+# 3. Check cPanel Error Logs for specific error messages
+# 4. Contact your hosting provider if mod_deflate, mod_expires, or mod_headers are disabled
+
+# ============================================
+# HASH ROUTING NOTES
+# ============================================
+# This app uses hash-based routing (URLs like falconids.com/#/order)
+# Benefits:
+# - Works on any static host without server configuration
+# - No need for SPA rewrite rules
+# - Compatible with all hosting providers
+# - Bookmarkable URLs work out of the box
+#
+# If you prefer path-based routing (falconids.com/order):
+# - You would need to add SPA rewrite rules
+# - Not recommended for cPanel shared hosting
+# - Hash routing is simpler and more reliable for this use case

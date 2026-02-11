@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T06:00:17.696Z",
+  "generatedAt": "2026-02-11T15:08:31.900Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,40 +11,38 @@
     "implemented": 3,
     "items": [
       {
-        "id": "REQ-4",
-        "summary": "Create or update a user-facing documentation page (English) that explains how to self-host the React frontend on a shared hosting server using cPanel, including exactly where to upload files for (a) a primary domain and (b) an addon domain or subdomain, and how to configure the app when hosted in a subdirectory.",
+        "id": "REQ-1",
+        "summary": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/DEPLOYMENT.md",
-          "frontend/public/DEPLOYMENT.md"
+          "frontend/src/pages/HomePage.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/DEPLOYMENT.md"
+          "frontend/src/pages/HomePage.tsx"
         ]
       },
       {
-        "id": "REQ-5",
-        "summary": "Ensure the deployment/how-to documentation is shipped with the production frontend build and is accessible from the existing “Deployment Guide” footer link (currently linking to getDocumentUrl('DEPLOYMENT.md')).",
+        "id": "REQ-2",
+        "summary": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/DEPLOYMENT.md",
-          "frontend/src/App.tsx"
+          "frontend/src/pages/OrderPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/DEPLOYMENT.md"
+          "frontend/src/pages/OrderPage.tsx"
         ]
       },
       {
-        "id": "REQ-6",
-        "summary": "Add a cPanel-friendly static-hosting configuration snippet (as a file included with the frontend static assets) and document when/how to use it (e.g., optional .htaccess for caching/compression and any SPA-related settings that apply).",
+        "id": "REQ-3",
+        "summary": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/.htaccess",
-          "frontend/public/DEPLOYMENT.md"
+          "frontend/src/pages/PricesPage.tsx",
+          "frontend/src/pages/OrderConfirmationPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/.htaccess",
-          "frontend/public/DEPLOYMENT.md"
+          "frontend/src/pages/PricesPage.tsx",
+          "frontend/src/pages/OrderConfirmationPage.tsx"
         ]
       }
     ]
@@ -54,8 +52,10 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/.htaccess",
-    "frontend/public/DEPLOYMENT.md",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/OrderConfirmationPage.tsx",
+    "frontend/src/pages/OrderPage.tsx",
+    "frontend/src/pages/PricesPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

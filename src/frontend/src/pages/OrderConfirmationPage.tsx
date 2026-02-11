@@ -140,7 +140,7 @@ export default function OrderConfirmationPage({ orderId }: OrderConfirmationPage
                     Production
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Once payment is received, we'll begin producing your custom novelty IDs with professional quality materials.
+                    Once payment is received, we'll begin producing your custom IDs with professional quality materials.
                   </p>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export default function OrderConfirmationPage({ orderId }: OrderConfirmationPage
                     Shipping
                   </h4>
                   <p className="text-sm text-muted-foreground">
-                    Your completed novelty IDs (2 copies) will be carefully packaged and shipped to your provided address.
+                    Your completed IDs (2 copies) will be carefully packaged and shipped to your provided address.
                   </p>
                 </div>
               </div>
@@ -193,16 +193,33 @@ export default function OrderConfirmationPage({ orderId }: OrderConfirmationPage
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
                 <span>
-                  <strong className="text-foreground">Processing Time:</strong> Novelty ID orders typically take 5-10 business days to produce after payment is received, plus shipping time.
+                  <strong className="text-foreground">Timeline:</strong> Total time from order to delivery is typically 8-17 business days (5-10 days production + 3-7 days shipping).
                 </span>
               </li>
             </ul>
           </div>
 
-          <div className="flex justify-center pt-4">
-            <Button onClick={() => window.location.hash = '#/'} size="lg" className="gap-2">
+          <Separator />
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => window.location.hash = '/my-orders'}
+              className="gap-2"
+            >
+              <Package className="h-4 w-4" />
+              View My Orders
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => window.location.hash = '/'}
+              className="gap-2"
+            >
               <Home className="h-4 w-4" />
-              Return to Home
+              Back to Home
             </Button>
           </div>
         </CardContent>

@@ -1,69 +1,58 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "cPanel self-hosting documentation shipped in production build",
+  "title": "Remove legal/novelty notices from customer ordering flow UI",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Update user-facing docs to explain cPanel static hosting for primary/addon domains and subdirectory hosting (including BASE_URL).",
+      "id": "REQ-1",
+      "summary": "Remove the “Important Legal Notice” section and other legal/novelty disclaimer messaging from the marketing homepage while keeping layout intact.",
       "acceptanceCriteria": [
-        "The documentation includes a step-by-step build section (how to generate the production static files) and an upload section (what folder(s) in cPanel to upload into, e.g., public_html / addon domain docroot).",
-        "The documentation explains how to host the app at the domain root vs. in a subdirectory and explicitly documents how to set the correct BASE_URL for subdirectory hosting (consistent with frontend/src/utils/assetPaths.ts using import.meta.env.BASE_URL).",
-        "The documentation explicitly states that the Motoko backend cannot run on cPanel/shared hosting and must remain deployed on the Internet Computer, while the frontend can be self-hosted as static files.",
-        "The documentation includes verification steps (what URLs to open, what to click) and a troubleshooting section relevant to cPanel/static hosting."
+        "Home page no longer renders the section titled “Important Legal Notice”.",
+        "Home page no longer includes the novelty/entertainment-only disclaimer sentences (e.g., “novelty… for entertainment… only”, “not intended to be used as real identification”, “Using novelty IDs… is illegal”).",
+        "Page layout remains visually consistent and free of empty gaps where the removed section previously appeared."
       ],
       "file_operations": [
         {
-          "path": "frontend/DEPLOYMENT.md",
+          "path": "frontend/src/pages/HomePage.tsx",
           "operation": "modify",
-          "description": "Expand/adjust the existing guide to include explicit cPanel instructions: (a) primary domain upload location (e.g., public_html), (b) addon domain/subdomain document root locations, and (c) subdirectory hosting guidance including how to build with the correct base path so import.meta.env.BASE_URL aligns with frontend/src/utils/assetPaths.ts."
-        },
-        {
-          "path": "frontend/public/DEPLOYMENT.md",
-          "operation": "create",
-          "description": "Add a public, user-facing copy of the deployment guide that the built static site can serve directly; include the same cPanel primary/addon/subdomain + subdirectory BASE_URL guidance, plus verification and troubleshooting steps."
+          "description": "Remove the entire “Important Legal Notice” section and delete/rewrite homepage copy blocks and cards that contain novelty/legal disclaimer language (e.g., hero subtitle and “Novelty Only”/About copy), ensuring the remaining sections reflow cleanly with no empty spacing."
         }
       ]
     },
     {
-      "id": "REQ-5",
-      "summary": "Ship the deployment documentation with the production frontend build and keep it accessible from the existing footer “Deployment Guide” link.",
+      "id": "REQ-2",
+      "summary": "Remove legal/novelty notice UI and lawful-use attestation gating from the order page so users can submit orders without acknowledging disclaimers.",
       "acceptanceCriteria": [
-        "After building the frontend for production, the documentation file is present in the generated static output and can be opened in a browser from the running site.",
-        "Clicking the footer “Deployment Guide” link opens the documentation successfully when the app is hosted on a static server (including cPanel).",
-        "No changes are made to any frontend immutablePaths files."
+        "Order page no longer shows the warning alert that starts with “Novelty Use Only:”.",
+        "Any attestation checkbox and related copy (lawful-use agreement) is removed from the order form UI.",
+        "Client-side validation no longer blocks submission due to attestation (i.e., no “You must agree to the lawful use attestation to proceed” error).",
+        "Submitting an order still requires the existing required fields (contact/shipping fields, ID info fields, photo, signature) and successfully calls the existing submit order mutation."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/DEPLOYMENT.md",
+          "path": "frontend/src/pages/OrderPage.tsx",
           "operation": "modify",
-          "description": "Ensure the public documentation file is the canonical file served by static hosting so getDocumentUrl('DEPLOYMENT.md') resolves correctly under the configured base path (including subdirectory hosting)."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Verify the existing footer link continues to reference getDocumentUrl('DEPLOYMENT.md') and, if needed, adjust only non-immutable code so it reliably opens the shipped public doc when deployed to static hosting (including cPanel and subdirectory base paths)."
+          "description": "Remove the warning alert block containing “Novelty Use Only:” messaging; remove the lawful-use attestation checkbox UI and all related state/validation/error handling (attestationChecked, fieldErrors.attestation, and submission blocking), while preserving required-field validation for contact/shipping, ID info, photo, and signature and keeping the existing submit order mutation call unchanged."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Include a cPanel-friendly static-hosting configuration snippet as a static asset and document when/how to use it.",
+      "id": "REQ-3",
+      "summary": "Remove legal/novelty disclaimer wording from other customer-facing ordering-flow pages (prices and order confirmation) while preserving core content.",
       "acceptanceCriteria": [
-        "A ready-to-upload configuration file is included alongside the built frontend static files (suitable for typical Apache-based cPanel hosting).",
-        "The documentation explains where to place the configuration file in the cPanel file manager and what to do if the hosting environment does not support the configuration directives.",
-        "The configuration guidance does not assume server-side runtimes; it remains compatible with pure static hosting."
+        "Prices and confirmation pages do not include legal/novelty disclaimer notice text (e.g., “novelty… for entertainment… only”, “not real government IDs”, “illegal”, “lawful use only”).",
+        "All pages still render without runtime errors and keep their core content (pricing, payment contact info, order ID, next steps)."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/.htaccess",
-          "operation": "create",
-          "description": "Add an Apache/cPanel-friendly optional .htaccess snippet suitable for pure static hosting (e.g., caching/compression headers where safe); avoid assumptions requiring server runtimes and avoid SPA-rewrite requirements since the app uses hash-based routing."
+          "path": "frontend/src/pages/PricesPage.tsx",
+          "operation": "modify",
+          "description": "Remove or rewrite customer-facing text that includes novelty/legal disclaimer language (e.g., FAQ entry about “Are these real IDs?” and any “novelty” disclaimers), while keeping pricing amounts, payment contact information, and accepted payment methods unchanged."
         },
         {
-          "path": "frontend/public/DEPLOYMENT.md",
+          "path": "frontend/src/pages/OrderConfirmationPage.tsx",
           "operation": "modify",
-          "description": "Document the .htaccess snippet: where to upload it (domain docroot and/or subdirectory root), when to use it, and what to do if cPanel/Apache modules or directives are unsupported (including safe fallback guidance)."
+          "description": "Remove or rewrite any legal/novelty disclaimer wording in confirmation content (including “novelty” mentions and any disclaimer-like phrasing) while preserving the order ID display, payment contact instructions, and next-steps timeline; ensure the page still renders without runtime errors."
         }
       ]
     }

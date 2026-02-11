@@ -1,4 +1,4 @@
-# Falcon IDs - Self-Hosting Guide for cPanel
+# Falcon IDs - Self-Hosting Guide for FalconIds.com (cPanel)
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -16,7 +16,7 @@
 
 Falcon IDs is a full-stack application with two components:
 - **Backend**: Motoko smart contract running on the Internet Computer (already deployed)
-- **Frontend**: React static files that you can host on your cPanel server
+- **Frontend**: React static files that you can host on your cPanel server at FalconIds.com
 
 This guide shows you how to host the frontend on your shared hosting server.
 
@@ -26,11 +26,11 @@ This guide shows you how to host the frontend on your shared hosting server.
 
 ### Important: What Runs Where
 
-**✅ Frontend (cPanel)**: The React application (HTML, CSS, JavaScript files) can be hosted on any static web server, including cPanel shared hosting.
+**✅ Frontend (cPanel at FalconIds.com)**: The React application (HTML, CSS, JavaScript files) can be hosted on any static web server, including cPanel shared hosting.
 
 **❌ Backend (Internet Computer ONLY)**: The Motoko backend CANNOT run on cPanel or traditional web hosting. It must remain deployed on the Internet Computer blockchain.
 
 ### How It Works
 
-Your cPanel-hosted frontend communicates with the Internet Computer backend via HTTPS:
+Your cPanel-hosted frontend at FalconIds.com communicates with the Internet Computer backend via HTTPS:
 

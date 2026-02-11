@@ -11,6 +11,8 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
+
+
 actor {
   type Time = Time.Time;
 
@@ -70,21 +72,6 @@ actor {
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
-  func isAdminUser(caller : Principal) : Bool {
-    // Check if user is an AccessControl admin
-    if (AccessControl.isAdmin(accessControlState, caller)) {
-      return true;
-    };
-
-    // Check if user is the special Travis Castonguay admin
-    switch (userProfiles.get(caller)) {
-      case (null) { false };
-      case (?profile) {
-        profile.email == "traviscastonguay@gmail.com";
-      };
-    };
-  };
-
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");
@@ -93,7 +80,7 @@ actor {
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not isAdminUser(caller)) {
+    if (caller != user and not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     userProfiles.get(user);
@@ -103,6 +90,15 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
+    
+    // Auto-promote to admin if email matches the special admin email
+    if (profile.email == "traviscastonguay@gmail.com") {
+      // Check if not already admin to avoid unnecessary calls
+      if (not (AccessControl.isAdmin(accessControlState, caller))) {
+        AccessControl.assignRole(accessControlState, caller, caller, #admin);
+      };
+    };
+    
     userProfiles.add(caller, profile);
   };
 
@@ -138,7 +134,7 @@ actor {
   };
 
   public shared ({ caller }) func updateOrderStatus(orderId : Nat, newStatus : OrderStatus) : async () {
-    if (not isAdminUser(caller)) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can update order status");
     };
     switch (orders.get(orderId)) {
@@ -154,7 +150,7 @@ actor {
   };
 
   public shared ({ caller }) func updatePaymentContactStatus(orderId : Nat, newStatus : PaymentContactStatus, notes : Text) : async () {
-    if (not isAdminUser(caller)) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can update payment contact status");
     };
     switch (orders.get(orderId)) {
@@ -174,7 +170,7 @@ actor {
     switch (orders.get(orderId)) {
       case (null) { null };
       case (?order) {
-        if (caller != order.owner and not isAdminUser(caller)) {
+        if (caller != order.owner and not (AccessControl.isAdmin(accessControlState, caller))) {
           Runtime.trap("Unauthorized: Can only view your own orders");
         };
         ?order.status;
@@ -186,7 +182,7 @@ actor {
     switch (orders.get(orderId)) {
       case (null) { null };
       case (?order) {
-        if (caller != order.owner and not isAdminUser(caller)) {
+        if (caller != order.owner and not (AccessControl.isAdmin(accessControlState, caller))) {
           Runtime.trap("Unauthorized: Can only view your own orders");
         };
         ?order;
@@ -203,7 +199,7 @@ actor {
   };
 
   public query ({ caller }) func getAllOrders() : async [Order] {
-    if (not isAdminUser(caller)) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view all orders");
     };
     orders.values().toArray();

@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-or-update-a-user-facing-documentation-page-english-that-explains-how-to-self-host-the-react-frontend-on-a-shared-hosting-server-using-cpanel-including-exactly-where-to-upload-files-for-a-a-primary-domain-and-b-an-addon-domain-or-subdomain-and-how-to-configure-the-app-when-hosted-in-a-subdirectory",
-      "featureTitle": "Create or update a user-facing documentation page (English) that explains how to self-host the React frontend on a shared hosting server using cPanel, including exactly where to upload files for (a) a primary domain and (b) an addon domain or subdomain, and how to configure the app when hosted in a subdirectory.",
+      "featureId": "feature-remove-the-important-legal-notice-section-and-any-other-legal-novelty-disclaimer-messaging-from-the-marketing-homepage-so-customers-are-not-shown-legal-novelty-notices-while-browsing",
+      "featureTitle": "Remove the “Important Legal Notice” section and any other legal/novelty disclaimer messaging from the marketing homepage so customers are not shown legal/novelty notices while browsing.",
       "files": [
-        "frontend/public/DEPLOYMENT.md"
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,15 +17,15 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-deployment-how-to-documentation-is-shipped-with-the-production-frontend-build-and-is-accessible-from-the-existing-deployment-guide-footer-link-currently-linking-to-getdocumenturl-deployment-md",
-      "featureTitle": "Ensure the deployment/how-to documentation is shipped with the production frontend build and is accessible from the existing “Deployment Guide” footer link (currently linking to getDocumentUrl('DEPLOYMENT.md')).",
+      "featureId": "feature-remove-legal-novelty-notice-ui-from-the-order-page-including-the-warning-alert-and-the-lawful-use-attestation-requirement-so-users-can-submit-an-order-without-acknowledging-a-novelty-legal-disclaimer",
+      "featureTitle": "Remove legal/novelty notice UI from the order page, including the warning alert and the lawful-use attestation requirement, so users can submit an order without acknowledging a novelty/legal disclaimer.",
       "files": [
-        "frontend/public/DEPLOYMENT.md"
+        "frontend/src/pages/OrderPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -37,16 +37,16 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-cpanel-friendly-static-hosting-configuration-snippet-as-a-file-included-with-the-frontend-static-assets-and-document-when-how-to-use-it-e-g-optional-htaccess-for-caching-compression-and-any-spa-related-settings-that-apply",
-      "featureTitle": "Add a cPanel-friendly static-hosting configuration snippet (as a file included with the frontend static assets) and document when/how to use it (e.g., optional .htaccess for caching/compression and any SPA-related settings that apply).",
+      "featureId": "feature-remove-legal-novelty-notice-wording-from-other-customer-facing-ordering-flow-pages-where-it-appears-e-g-prices-page-and-order-confirmation-content-ensuring-customers-are-not-shown-legal-novelty-disclaimer-notices-anywhere-in-the-flow",
+      "featureTitle": "Remove legal/novelty notice wording from other customer-facing ordering-flow pages where it appears (e.g., prices page and order confirmation content), ensuring customers are not shown legal/novelty disclaimer notices anywhere in the flow.",
       "files": [
-        "frontend/public/.htaccess",
-        "frontend/public/DEPLOYMENT.md"
+        "frontend/src/pages/OrderConfirmationPage.tsx",
+        "frontend/src/pages/PricesPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -58,7 +58,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-3"
       ],
       "confidence": "high"
     }

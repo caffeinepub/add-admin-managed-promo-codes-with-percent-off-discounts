@@ -36,5 +36,5 @@ The backend is a smart contract (canister) that must be deployed to the Internet
 
 ### How the Frontend Connects to the Backend
 
-The static frontend (hosted on cPanel) communicates with the backend canister (hosted on the Internet Computer) via HTTPS:
+The static frontend (hosted on cPanel at FalconIds.com) communicates with the backend canister (hosted on the Internet Computer) via HTTPS:
 
