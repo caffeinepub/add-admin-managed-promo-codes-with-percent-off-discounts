@@ -1,0 +1,66 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-create-or-update-a-user-facing-documentation-page-english-that-explains-how-to-self-host-the-react-frontend-on-a-shared-hosting-server-using-cpanel-including-exactly-where-to-upload-files-for-a-a-primary-domain-and-b-an-addon-domain-or-subdomain-and-how-to-configure-the-app-when-hosted-in-a-subdirectory",
+      "featureTitle": "Create or update a user-facing documentation page (English) that explains how to self-host the React frontend on a shared hosting server using cPanel, including exactly where to upload files for (a) a primary domain and (b) an addon domain or subdomain, and how to configure the app when hosted in a subdirectory.",
+      "files": [
+        "frontend/public/DEPLOYMENT.md"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-deployment-how-to-documentation-is-shipped-with-the-production-frontend-build-and-is-accessible-from-the-existing-deployment-guide-footer-link-currently-linking-to-getdocumenturl-deployment-md",
+      "featureTitle": "Ensure the deployment/how-to documentation is shipped with the production frontend build and is accessible from the existing “Deployment Guide” footer link (currently linking to getDocumentUrl('DEPLOYMENT.md')).",
+      "files": [
+        "frontend/public/DEPLOYMENT.md"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-cpanel-friendly-static-hosting-configuration-snippet-as-a-file-included-with-the-frontend-static-assets-and-document-when-how-to-use-it-e-g-optional-htaccess-for-caching-compression-and-any-spa-related-settings-that-apply",
+      "featureTitle": "Add a cPanel-friendly static-hosting configuration snippet (as a file included with the frontend static assets) and document when/how to use it (e.g., optional .htaccess for caching/compression and any SPA-related settings that apply).",
+      "files": [
+        "frontend/public/.htaccess",
+        "frontend/public/DEPLOYMENT.md"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

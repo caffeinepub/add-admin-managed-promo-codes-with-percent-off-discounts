@@ -1,2 +1,3 @@
-# add-admin-managed-promo-codes-with-percent-off-discounts
-Exported from Caffeine project: Add cPanel self-hosting setup guide and ensure deployment docs are included in the built frontend
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

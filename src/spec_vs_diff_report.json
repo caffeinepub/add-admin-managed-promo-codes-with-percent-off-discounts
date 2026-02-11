@@ -1,0 +1,41 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-11T06:00:17.693Z",
+  "summary": "The diff adds cPanel-oriented static assets (a public DEPLOYMENT.md and an optional public .htaccess). However, based on the truncated documentation content shown, several REQ-4/REQ-6 acceptance-criteria items are not verifiably present in the new docs from the provided diff summary. REQ-5 appears plausibly addressed by placing DEPLOYMENT.md under frontend/public, but footer-link behavior and build-output verification are not directly evidenced beyond that.",
+  "missing_requirements": [
+    {
+      "id": "REQ-4",
+      "requirement": "Documentation page includes exact cPanel upload locations for (a) primary domain and (b) addon domain/subdomain, plus subdirectory hosting guidance with explicit BASE_URL instructions, verification steps, and troubleshooting.",
+      "reason": "The newly added frontend/public/DEPLOYMENT.md is truncated in the diff summary and only shows the beginning (Overview/Architecture). The required detailed cPanel upload paths (primary vs addon/subdomain), explicit BASE_URL instructions for subdirectory hosting, verification steps, and troubleshooting are not visible/confirmable from the provided excerpt.",
+      "evidence": [
+        "frontend/public/DEPLOYMENT.md"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Documentation explains where to place the cPanel-friendly configuration snippet in cPanel and what to do if hosting does not support the directives; snippet must be ready-to-upload alongside built static files.",
+      "reason": "A ready-to-upload .htaccess file is added, but the documentation excerpt shown does not include placement instructions or guidance for unsupported directives (beyond a brief comment inside .htaccess about deleting it if 500 errors). The required doc guidance is not confirmable from the provided truncated DEPLOYMENT.md content.",
+      "evidence": [
+        "frontend/public/.htaccess",
+        "frontend/public/DEPLOYMENT.md"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Project meta/state tracking updates (new/updated project_state.json entries marking AR-* requests as pending).",
+      "reason": "The BuildRequest focuses on adding deployment docs and static assets for cPanel; it does not request adding or modifying project tracking/state files.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "confidence": 0.6,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/public/.htaccess",
+    "frontend/public/DEPLOYMENT.md",
+    "project_state.json"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Project now includes enabling self-hosted deployment on shared hosting (cPanel) with an upload/setup guide.",
+  "architectural_notes": [
+    "Target deployment includes shared hosting environments (cPanel) requiring a self-hostable build/package and setup steps."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-or-update-a-user-facing-documentation-page-english-that-explains-how-to-self-host-the-react-frontend-on-a-shared-hosting-server-using-cpanel-including-exactly-where-to-upload-files-for-a-a-primary-domain-and-b-an-addon-domain-or-subdomain-and-how-to-configure-the-app-when-hosted-in-a-subdirectory",
+      "title": "Create or update a user-facing documentation page (English) that explains how to self-host the React frontend on a shared hosting server using cPanel, including exactly where to upload files for (a) a primary domain and (b) an addon domain or subdomain, and how to configure the app when hosted in a subdirectory.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-deployment-how-to-documentation-is-shipped-with-the-production-frontend-build-and-is-accessible-from-the-existing-deployment-guide-footer-link-currently-linking-to-getdocumenturl-deployment-md",
+      "title": "Ensure the deployment/how-to documentation is shipped with the production frontend build and is accessible from the existing “Deployment Guide” footer link (currently linking to getDocumentUrl('DEPLOYMENT.md')).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-cpanel-friendly-static-hosting-configuration-snippet-as-a-file-included-with-the-frontend-static-assets-and-document-when-how-to-use-it-e-g-optional-htaccess-for-caching-compression-and-any-spa-related-settings-that-apply",
+      "title": "Add a cPanel-friendly static-hosting configuration snippet (as a file included with the frontend static assets) and document when/how to use it (e.g., optional .htaccess for caching/compression and any SPA-related settings that apply).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Enable self-hosting on shared hosting (cPanel) and provide an upload/setup document explaining where to place files and how to configure the domain.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Add cPanel self-hosting setup guide and ensure deployment docs are included in the built frontend",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

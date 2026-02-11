@@ -1,0 +1,85 @@
+{
+  "kind": "build_request",
+  "title": "Add cPanel self-hosting setup guide and ensure deployment docs are included in the built frontend",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-4",
+      "text": "Create or update a user-facing documentation page (English) that explains how to self-host the React frontend on a shared hosting server using cPanel, including exactly where to upload files for (a) a primary domain and (b) an addon domain or subdomain, and how to configure the app when hosted in a subdirectory.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Now make it so i can host it my self on my shred hosting server with a how to upload doc to tell me how to setup and where to put the files in my cPanel domain"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The documentation includes a step-by-step build section (how to generate the production static files) and an upload section (what folder(s) in cPanel to upload into, e.g., public_html / addon domain docroot).",
+        "The documentation explains how to host the app at the domain root vs. in a subdirectory and explicitly documents how to set the correct BASE_URL for subdirectory hosting (consistent with frontend/src/utils/assetPaths.ts using import.meta.env.BASE_URL).",
+        "The documentation explicitly states that the Motoko backend cannot run on cPanel/shared hosting and must remain deployed on the Internet Computer, while the frontend can be self-hosted as static files.",
+        "The documentation includes verification steps (what URLs to open, what to click) and a troubleshooting section relevant to cPanel/static hosting."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Ensure the deployment/how-to documentation is shipped with the production frontend build and is accessible from the existing “Deployment Guide” footer link (currently linking to getDocumentUrl('DEPLOYMENT.md')).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "how to upload doc to tell me how to setup and where to put the files in my cPanel domain"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After building the frontend for production, the documentation file is present in the generated static output and can be opened in a browser from the running site.",
+        "Clicking the footer “Deployment Guide” link opens the documentation successfully when the app is hosted on a static server (including cPanel).",
+        "No changes are made to any frontend immutablePaths files."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add a cPanel-friendly static-hosting configuration snippet (as a file included with the frontend static assets) and document when/how to use it (e.g., optional .htaccess for caching/compression and any SPA-related settings that apply).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "host it my self on my shred hosting server ... setup and where to put the files in my cPanel domain"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A ready-to-upload configuration file is included alongside the built frontend static files (suitable for typical Apache-based cPanel hosting).",
+        "The documentation explains where to place the configuration file in the cPanel file manager and what to do if the hosting environment does not support the configuration directives.",
+        "The configuration guidance does not assume server-side runtimes; it remains compatible with pure static hosting."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not propose or implement running the Motoko backend on shared hosting/cPanel; only the static React frontend can be self-hosted there.",
+    "Do not edit files under frontend/immutablePaths listed in SYSTEM_CONTEXT."
+  ],
+  "nonGoals": [
+    "Adding new hosting providers or deployment targets beyond shared hosting (cPanel) static hosting instructions.",
+    "Adding third-party authentication methods beyond Internet Identity.",
+    "Replacing hash-based routing with a different routing strategy."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

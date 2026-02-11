@@ -1,0 +1,98 @@
+# Falcon IDs - Apache Configuration for cPanel Static Hosting
+# This file is OPTIONAL and provides performance optimizations
+# If you encounter 500 errors, you can safely delete this file
+
+# ============================================
+# GZIP Compression
+# ============================================
+# Compress text-based files for faster transfer
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ============================================
+# Browser Caching
+# ============================================
+# Set cache headers for static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  
+  # Images
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  
+  # CSS and JavaScript
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  
+  # Fonts
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/font-woff "access plus 1 year"
+  ExpiresByType application/font-woff2 "access plus 1 year"
+  
+  # HTML (short cache for updates)
+  ExpiresByType text/html "access plus 1 hour"
+  
+  # JSON and XML
+  ExpiresByType application/json "access plus 1 hour"
+  ExpiresByType application/xml "access plus 1 hour"
+</IfModule>
+
+# ============================================
+# Security Headers
+# ============================================
+# Add security headers (safe for static sites)
+<IfModule mod_headers.c>
+  # Prevent MIME type sniffing
+  Header set X-Content-Type-Options "nosniff"
+  
+  # Enable XSS protection
+  Header set X-XSS-Protection "1; mode=block"
+  
+  # Control framing (prevent clickjacking)
+  Header set X-Frame-Options "SAMEORIGIN"
+  
+  # Referrer policy
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ============================================
+# MIME Types
+# ============================================
+# Ensure correct MIME types for modern file formats
+<IfModule mod_mime.c>
+  AddType application/javascript js
+  AddType text/css css
+  AddType image/svg+xml svg
+  AddType image/webp webp
+  AddType font/woff woff
+  AddType font/woff2 woff2
+</IfModule>
+
+# ============================================
+# Error Documents (Optional)
+# ============================================
+# Uncomment to use custom error pages
+# ErrorDocument 404 /index.html
+# ErrorDocument 500 /index.html
+
+# ============================================
+# Notes
+# ============================================
+# This configuration is designed for pure static hosting
+# It does NOT include SPA rewrite rules because this app uses hash-based routing
+# If any directive causes errors, you can safely remove it or delete this file
+# The app will work fine without this file - it just won't have these optimizations

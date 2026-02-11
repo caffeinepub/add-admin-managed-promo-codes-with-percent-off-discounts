@@ -1,0 +1,71 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "cPanel self-hosting documentation shipped in production build",
+  "requirements": [
+    {
+      "id": "REQ-4",
+      "summary": "Update user-facing docs to explain cPanel static hosting for primary/addon domains and subdirectory hosting (including BASE_URL).",
+      "acceptanceCriteria": [
+        "The documentation includes a step-by-step build section (how to generate the production static files) and an upload section (what folder(s) in cPanel to upload into, e.g., public_html / addon domain docroot).",
+        "The documentation explains how to host the app at the domain root vs. in a subdirectory and explicitly documents how to set the correct BASE_URL for subdirectory hosting (consistent with frontend/src/utils/assetPaths.ts using import.meta.env.BASE_URL).",
+        "The documentation explicitly states that the Motoko backend cannot run on cPanel/shared hosting and must remain deployed on the Internet Computer, while the frontend can be self-hosted as static files.",
+        "The documentation includes verification steps (what URLs to open, what to click) and a troubleshooting section relevant to cPanel/static hosting."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/DEPLOYMENT.md",
+          "operation": "modify",
+          "description": "Expand/adjust the existing guide to include explicit cPanel instructions: (a) primary domain upload location (e.g., public_html), (b) addon domain/subdomain document root locations, and (c) subdirectory hosting guidance including how to build with the correct base path so import.meta.env.BASE_URL aligns with frontend/src/utils/assetPaths.ts."
+        },
+        {
+          "path": "frontend/public/DEPLOYMENT.md",
+          "operation": "create",
+          "description": "Add a public, user-facing copy of the deployment guide that the built static site can serve directly; include the same cPanel primary/addon/subdomain + subdirectory BASE_URL guidance, plus verification and troubleshooting steps."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Ship the deployment documentation with the production frontend build and keep it accessible from the existing footer “Deployment Guide” link.",
+      "acceptanceCriteria": [
+        "After building the frontend for production, the documentation file is present in the generated static output and can be opened in a browser from the running site.",
+        "Clicking the footer “Deployment Guide” link opens the documentation successfully when the app is hosted on a static server (including cPanel).",
+        "No changes are made to any frontend immutablePaths files."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/DEPLOYMENT.md",
+          "operation": "modify",
+          "description": "Ensure the public documentation file is the canonical file served by static hosting so getDocumentUrl('DEPLOYMENT.md') resolves correctly under the configured base path (including subdirectory hosting)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Verify the existing footer link continues to reference getDocumentUrl('DEPLOYMENT.md') and, if needed, adjust only non-immutable code so it reliably opens the shipped public doc when deployed to static hosting (including cPanel and subdirectory base paths)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Include a cPanel-friendly static-hosting configuration snippet as a static asset and document when/how to use it.",
+      "acceptanceCriteria": [
+        "A ready-to-upload configuration file is included alongside the built frontend static files (suitable for typical Apache-based cPanel hosting).",
+        "The documentation explains where to place the configuration file in the cPanel file manager and what to do if the hosting environment does not support the configuration directives.",
+        "The configuration guidance does not assume server-side runtimes; it remains compatible with pure static hosting."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/.htaccess",
+          "operation": "create",
+          "description": "Add an Apache/cPanel-friendly optional .htaccess snippet suitable for pure static hosting (e.g., caching/compression headers where safe); avoid assumptions requiring server runtimes and avoid SPA-rewrite requirements since the app uses hash-based routing."
+        },
+        {
+          "path": "frontend/public/DEPLOYMENT.md",
+          "operation": "modify",
+          "description": "Document the .htaccess snippet: where to upload it (domain docroot and/or subdirectory root), when to use it, and what to do if cPanel/Apache modules or directives are unsupported (including safe fallback guidance)."
+        }
+      ]
+    }
+  ]
+}
