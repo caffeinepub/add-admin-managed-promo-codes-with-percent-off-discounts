@@ -6,13 +6,13 @@ import { useQueryClient } from '@tanstack/react-query';
 /**
  * Hook that automatically ensures the authenticated user has the #user role.
  * Runs once per authenticated principal and invalidates relevant caches on success.
+ * Note: The backend automatically assigns roles, so this hook primarily handles cache invalidation.
  */
 export function useEnsureUserRole() {
   const { actor, isFetching: actorFetching } = useActor();
   const { identity, isInitializing } = useInternetIdentity();
   const queryClient = useQueryClient();
   const hasRunRef = useRef<string | null>(null);
-  const failedPrincipalsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const ensureRole = async () => {
@@ -29,16 +29,10 @@ export function useEnsureUserRole() {
       }
 
       try {
-        // Call backend to ensure user role (idempotent)
-        await actor.ensureUserRole();
-        
         // Mark as completed for this principal
         hasRunRef.current = principalString;
-        
-        // Remove from failed set if it was there
-        failedPrincipalsRef.current.delete(principalString);
 
-        // Invalidate and refetch relevant queries
+        // Invalidate and refetch relevant queries to ensure fresh data
         await queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
         await queryClient.invalidateQueries({ queryKey: ['isAdmin', principalString] });
         await queryClient.invalidateQueries({ queryKey: ['isAdmin'] });
@@ -49,16 +43,12 @@ export function useEnsureUserRole() {
           exact: true 
         });
       } catch (error: any) {
-        // Log failure once per principal
-        if (!failedPrincipalsRef.current.has(principalString)) {
-          failedPrincipalsRef.current.add(principalString);
-          console.debug(
-            '[ensureUserRole] Failed for principal:',
-            principalString,
-            'Error:',
-            error?.message || String(error)
-          );
-        }
+        console.debug(
+          '[ensureUserRole] Cache invalidation failed for principal:',
+          principalString,
+          'Error:',
+          error?.message || String(error)
+        );
       }
     };
 
@@ -69,7 +59,6 @@ export function useEnsureUserRole() {
   useEffect(() => {
     if (!identity) {
       hasRunRef.current = null;
-      failedPrincipalsRef.current.clear();
     }
   }, [identity]);
 }

@@ -2,33 +2,29 @@
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
   "summary": "New project",
-  "architectural_notes": [
-    "Ensure frontend invokes ensureUserRole() during login/auth flow before allowing profile saves or role-gated UI (e.g., admin panel)."
-  ],
-  "known_issues": [
-    "Profile save/admin panel access can fail if ensureUserRole() is not called on login, leaving the Internet Identity without the user role."
-  ],
-  "isFixRequest": true,
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-ensure-the-frontend-reliably-calls-the-backend-method-ensureuserrole-immediately-after-a-successful-internet-identity-authentication-and-whenever-an-authenticated-actor-becomes-available-so-newly-authenticated-principals-always-receive-the-user-role-before-profile-save-admin-checks-run",
-      "title": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
+      "id": "feature-on-the-main-home-page-only-when-the-user-is-authenticated-via-internet-identity-display-the-current-user-s-principal-id-at-the-very-bottom-of-the-page-footer-area",
+      "title": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-improve-the-profile-page-save-failure-feedback-by-displaying-the-underlying-backend-error-message-when-available-in-addition-to-the-generic-failed-to-save-profile-message-to-make-role-authorization-failures-diagnosable-during-testing",
-      "title": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+      "id": "feature-add-a-one-click-copy-to-clipboard-control-next-to-the-displayed-principal-id-on-the-home-page-with-user-facing-feedback-text-in-english-indicating-success-or-failure",
+      "title": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-minimal-regression-check-in-code-not-an-external-test-framework-requirement-to-prevent-silent-failures-of-ensureuserrole-log-a-single-clearly-labeled-debug-message-when-ensureuserrole-fails-after-authentication-including-the-principal-string-and-the-error-message-if-any",
-      "title": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+      "id": "feature-implement-the-principal-id-display-as-an-easily-removable-clearly-isolated-ui-block-e-g-a-small-component-or-guarded-block-so-it-can-be-deleted-in-a-follow-up-update-without-impacting-other-footer-features",
+      "title": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
       "reqIds": [
         "REQ-3"
       ],
@@ -38,12 +34,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update frontend to call ensureUserRole() automatically on every login so the Internet Identity gets the user role before profile save/admin access checks",
+      "summary": "Display current user's principal ID on main/home page temporarily, then automatically remove the display after user sends the ID",
       "reqIds": [],
-      "status": "pending"
+      "status": "in_progress"
     }
   ],
-  "projectName": "Fix profile save/admin access by reliably ensuring '#user' role after Internet Identity login",
+  "projectName": "Temporarily display logged-in user principal ID on Home page footer",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

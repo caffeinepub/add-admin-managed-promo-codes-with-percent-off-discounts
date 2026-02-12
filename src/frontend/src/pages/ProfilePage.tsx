@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile, useSaveCallerUserProfile } from '../hooks/useProfile';
 import { useCheckAdminAccess } from '../hooks/useAdmin';
+import { useAdminRestore } from '../hooks/useAdminRestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, User, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
+import { Loader2, User, CheckCircle2, AlertCircle, Shield, RefreshCw } from 'lucide-react';
 import LoginRequiredScreen from '../components/LoginRequiredScreen';
 import { formatErrorMessage, extractBackendError } from '../utils/errorFormatting';
 
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const saveProfileMutation = useSaveCallerUserProfile();
   const { isAdmin, isLoading: adminCheckLoading } = useCheckAdminAccess();
+  const adminRestoreMutation = useAdminRestore();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +27,7 @@ export default function ProfilePage() {
 
   const [hasChanges, setHasChanges] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showRestoreSuccess, setShowRestoreSuccess] = useState(false);
 
   const isAuthenticated = !!identity;
 
@@ -55,6 +58,14 @@ export default function ProfilePage() {
       );
     }
   }, [formData, userProfile]);
+
+  // Show restore success message
+  useEffect(() => {
+    if (adminRestoreMutation.isSuccess) {
+      setShowRestoreSuccess(true);
+      setTimeout(() => setShowRestoreSuccess(false), 5000);
+    }
+  }, [adminRestoreMutation.isSuccess]);
 
   // Show loading state while checking authentication
   if (isInitializing) {
@@ -93,6 +104,14 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRestoreAdmin = async () => {
+    try {
+      await adminRestoreMutation.mutateAsync();
+    } catch (error: any) {
+      console.error('Failed to restore admin access:', error);
+    }
+  };
+
   const handleGoToAdmin = () => {
     window.location.hash = '/admin';
   };
@@ -116,6 +135,17 @@ export default function ProfilePage() {
         }
         
         return genericMessage;
+      })()
+    : '';
+
+  // Format admin restore error message
+  const restoreErrorMessage = adminRestoreMutation.isError
+    ? (() => {
+        const backendError = extractBackendError(adminRestoreMutation.error);
+        if (backendError) {
+          return backendError;
+        }
+        return formatErrorMessage(adminRestoreMutation.error) || 'Failed to restore admin access. Please try again.';
       })()
     : '';
 
@@ -251,6 +281,67 @@ export default function ProfilePage() {
                 >
                   <Shield className="mr-2 h-4 w-4" />
                   Go to Admin Panel
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Admin Restore Card - shown when logged in but not admin */}
+          {!adminCheckLoading && !isAdmin && (
+            <Card className="mt-6 border-amber-500/50 bg-amber-500/5">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-amber-500/10 p-2">
+                    <RefreshCw className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Restore Admin Access</CardTitle>
+                    <CardDescription>
+                      If you previously had admin access, you can attempt to restore it
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This action will attempt to restore your administrator privileges. This is only available in specific recovery scenarios.
+                </p>
+
+                {adminRestoreMutation.isError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="whitespace-pre-wrap break-words">
+                      {restoreErrorMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {showRestoreSuccess && (
+                  <Alert className="border-green-500/50 bg-green-500/10">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-600">
+                      Admin access restored successfully! The page will update momentarily.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  onClick={handleRestoreAdmin}
+                  disabled={adminRestoreMutation.isPending}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {adminRestoreMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Restoring Access...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Restore Admin Access
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

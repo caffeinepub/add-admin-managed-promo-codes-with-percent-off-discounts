@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T22:51:23.522Z",
+  "generatedAt": "2026-02-12T03:48:17.799Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,39 +12,39 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
+        "summary": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useEnsureUserRole.ts",
-          "frontend/src/components/LoginButton.tsx"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useEnsureUserRole.ts",
-          "frontend/src/components/LoginButton.tsx"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+        "summary": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/errorFormatting.ts",
-          "frontend/src/pages/ProfilePage.tsx"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/errorFormatting.ts",
-          "frontend/src/pages/ProfilePage.tsx"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+        "summary": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useEnsureUserRole.ts"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useEnsureUserRole.ts"
+          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/App.tsx"
         ]
       }
     ]
@@ -54,10 +54,8 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/LoginButton.tsx",
-    "frontend/src/hooks/useEnsureUserRole.ts",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/utils/errorFormatting.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/PrincipalIdFooterBlock.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

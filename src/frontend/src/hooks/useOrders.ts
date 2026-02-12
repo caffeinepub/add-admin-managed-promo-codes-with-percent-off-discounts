@@ -48,7 +48,7 @@ export function useSubmitOrder() {
         signature: params.idInfo.signature,
       };
 
-      return actor.submitOrder(
+      return actor.createOrder(
         params.customerName,
         params.email,
         params.phone,

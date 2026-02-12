@@ -1,62 +1,63 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Reliable post-auth #user role assignment and improved profile save diagnostics",
+  "title": "Show authenticated user's Principal ID in Home footer with copy control",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Trigger ensureUserRole() reliably right after Internet Identity authentication and whenever an authenticated actor becomes available, without modifying immutable auth/actor hooks.",
+      "summary": "Show the authenticated user's Principal ID at the bottom of the Home page only.",
       "acceptanceCriteria": [
-        "After a successful Internet Identity login, ensureUserRole() is invoked once for that principal without requiring a manual page refresh.",
-        "If the actor is recreated (e.g., identity changes), ensureUserRole() is invoked again for the new principal.",
-        "The implementation does not require editing any files under frontend/src/hooks/useInternetIdentity.ts(x) or frontend/src/hooks/useActor.ts (immutable paths)."
+        "When not logged in, no Principal ID is shown anywhere on the Home page.",
+        "When logged in, the Home page shows a clearly labeled value (e.g., \"Principal ID:\") containing identity.getPrincipal().toText().",
+        "The Principal ID display is visually placed at the bottom of the Home page (in or directly above the global footer) and does not overlap other content on mobile or desktop.",
+        "The Principal ID display appears only on the Home route and does not appear on Order, Prices, Profile, My Orders, or Admin pages."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useEnsureUserRole.ts",
-          "operation": "modify",
-          "description": "Harden the post-auth role-ensuring flow: ensure actor+identity readiness detection triggers a single ensureUserRole() call per principal immediately after authentication and again when the principal changes (actor recreation). Keep the logic independent of immutable hooks. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "operation": "create",
+          "description": "Create a small, self-contained footer UI block that reads the authenticated Internet Identity from the authorization component (useInternetIdentity) and renders a labeled Principal ID string using identity.getPrincipal().toText() only when identity is present. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/LoginButton.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "After a successful login action, proactively prompt role initialization by invalidating/refetching relevant react-query caches (e.g., actor-dependent queries), so ensureUserRole() runs without a manual refresh. Do not render or log any secret URL params. Verify the component's usage instructions before implementing."
+          "description": "Wire the PrincipalIdFooterBlock into the global footer but guard rendering so it appears only when currentRoute is 'home' (and relies on the block itself to render nothing if not authenticated), ensuring it is placed at the bottom/footer area and does not affect other routes."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Show backend-derived save error details on the Profile page while retaining the existing generic destructive alert and redacting sensitive values.",
+      "summary": "Add copy-to-clipboard control next to the displayed Principal ID with success/failure feedback.",
       "acceptanceCriteria": [
-        "When saveCallerUserProfile fails, the UI shows a human-readable error string derived from the thrown error (e.g., includes 'Unauthorized' or trap message when present).",
-        "The existing generic destructive alert remains, but includes additional details when available.",
-        "No sensitive secrets (e.g., admin token query param values) are ever rendered in the UI."
+        "Clicking the copy control copies the exact Principal ID text to the clipboard.",
+        "After copying, the UI shows an English success message (e.g., \"Copied\").",
+        "If clipboard copy fails, the UI shows an English error message (e.g., \"Copy failed\")."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/errorFormatting.ts",
-          "operation": "create",
-          "description": "Add a small helper to extract a human-readable message from unknown thrown errors and apply redaction rules (e.g., remove/obfuscate caffeineAdminToken-like values and other obvious secret patterns) before display. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
+          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
           "operation": "modify",
-          "description": "Enhance the destructive save error Alert to append sanitized, human-readable details from the mutation error (using the new error formatting helper) while keeping the existing generic 'Failed to save profile' copy. Verify the component's usage instructions before implementing."
+          "description": "Implement a one-click copy control adjacent to the Principal ID that uses the browser clipboard API to copy the exact Principal ID text, and render English success/error feedback states for copy result. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add a minimal, non-spamming debug log when ensureUserRole() fails after authentication, including principal and error message.",
+      "summary": "Isolate the Principal ID display into an easily removable UI block.",
       "acceptanceCriteria": [
-        "On an ensureUserRole() failure, the browser console includes one labeled debug log entry containing the principal string and the error message (if available).",
-        "EnsureUserRole failure logging does not spam repeatedly for the same principal in a stable session."
+        "The Principal ID display code is confined to a single, clearly named component or guarded block.",
+        "Removing that component/block fully removes the Principal ID display without breaking the global footer layout or navigation."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useEnsureUserRole.ts",
+          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
           "operation": "modify",
-          "description": "Implement once-per-principal failure logging for ensureUserRole(): on failure, emit a single clearly labeled console.debug containing principal string and extracted error message, and prevent repeated logs for the same principal until the principal changes or logout occurs. Verify the component's usage instructions before implementing."
+          "description": "Ensure the Principal ID display, copy behavior, and feedback UI are fully contained within this single component, with minimal/clean props and a clear internal guard that returns null when not authenticated, so deleting this file and its import removes the feature without impacting other footer content."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Keep the wiring to a single import and a single guarded render location in the footer so the feature can be removed by deleting the import and JSX block without affecting footer layout or navigation."
         }
       ]
     }

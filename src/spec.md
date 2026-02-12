@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Fix post-login role initialization so newly authenticated users reliably receive the `#user` role before profile saves/admin checks, and make save failures easier to diagnose.
+**Goal:** Temporarily show the authenticated user’s Internet Identity Principal ID at the bottom of the Home page, with a one-click copy control.
 
 **Planned changes:**
-- Ensure the frontend calls `ensureUserRole()` immediately after successful Internet Identity login and whenever a new authenticated actor/principal becomes available (without requiring a manual refresh and without editing immutable hook files).
-- Update the Profile page save error UI to keep the existing generic destructive alert while also showing a human-readable backend error detail when available (e.g., Unauthorized/trap text), without rendering any sensitive secrets.
-- Add a minimal in-code regression guard: if `ensureUserRole()` fails after authentication, emit a single clearly labeled debug console log containing the principal string and error message, avoiding repeated spam for the same principal in a stable session.
+- Add a small, clearly isolated UI block/component on the Home route that conditionally renders only when the user is authenticated and displays `identity.getPrincipal().toText()` labeled as “Principal ID:”.
+- Place the Principal ID block at the very bottom of the Home page (in or directly above the global footer) with responsive styling so it doesn’t overlap content.
+- Add a copy-to-clipboard control next to the Principal ID, with English success feedback (e.g., “Copied”) and error feedback (e.g., “Copy failed”).
 
-**User-visible outcome:** After logging in with Internet Identity, users can save their profile without needing to refresh first, and if saving fails they see a more informative error message to help diagnose authorization/role issues during testing.
+**User-visible outcome:** When logged in on the Home page, the user can see their Principal ID at the bottom and copy it with one click; when logged out (or on other pages) nothing is shown.

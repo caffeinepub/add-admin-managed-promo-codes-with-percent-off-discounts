@@ -24,16 +24,6 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const OrderStatus = IDL.Variant({
-  'shipped' : IDL.Null,
-  'pending' : IDL.Null,
-});
-export const PaymentContactStatus = IDL.Variant({
-  'notContacted' : IDL.Null,
-  'paymentReceived' : IDL.Null,
-  'contacted' : IDL.Null,
-});
-export const Time = IDL.Int;
 export const ShippingAddress = IDL.Record({
   'zip' : IDL.Text,
   'street' : IDL.Text,
@@ -51,13 +41,22 @@ export const IDInformation = IDL.Record({
   'photo' : IDL.Opt(ExternalBlob),
   'hairColor' : IDL.Text,
 });
+export const OrderStatus = IDL.Variant({
+  'shipped' : IDL.Null,
+  'pending' : IDL.Null,
+});
+export const PaymentContactStatus = IDL.Variant({
+  'notContacted' : IDL.Null,
+  'paymentReceived' : IDL.Null,
+  'contacted' : IDL.Null,
+});
 export const Order = IDL.Record({
   'id' : IDL.Nat,
   'customerName' : IDL.Text,
   'status' : OrderStatus,
   'owner' : IDL.Principal,
   'paymentContactStatus' : PaymentContactStatus,
-  'createdTime' : Time,
+  'createdTime' : IDL.Int,
   'email' : IDL.Text,
   'shippingAddress' : ShippingAddress,
   'idInfo' : IDInformation,
@@ -98,14 +97,18 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'assignAdminRoleToCaller' : IDL.Func([], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'ensureUserRole' : IDL.Func([], [], []),
+  'createOrder' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, ShippingAddress, IDInformation],
+      [IDL.Nat],
+      [],
+    ),
   'getAllOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getMyOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
   'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(Order)], ['query']),
-  'getOrderStatus' : IDL.Func([IDL.Nat], [IDL.Opt(OrderStatus)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -113,11 +116,6 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'submitOrder' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Text, ShippingAddress, IDInformation],
-      [IDL.Nat],
-      [],
-    ),
   'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
   'updatePaymentContactStatus' : IDL.Func(
       [IDL.Nat, PaymentContactStatus, IDL.Text],
@@ -145,16 +143,6 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const OrderStatus = IDL.Variant({
-    'shipped' : IDL.Null,
-    'pending' : IDL.Null,
-  });
-  const PaymentContactStatus = IDL.Variant({
-    'notContacted' : IDL.Null,
-    'paymentReceived' : IDL.Null,
-    'contacted' : IDL.Null,
-  });
-  const Time = IDL.Int;
   const ShippingAddress = IDL.Record({
     'zip' : IDL.Text,
     'street' : IDL.Text,
@@ -172,13 +160,22 @@ export const idlFactory = ({ IDL }) => {
     'photo' : IDL.Opt(ExternalBlob),
     'hairColor' : IDL.Text,
   });
+  const OrderStatus = IDL.Variant({
+    'shipped' : IDL.Null,
+    'pending' : IDL.Null,
+  });
+  const PaymentContactStatus = IDL.Variant({
+    'notContacted' : IDL.Null,
+    'paymentReceived' : IDL.Null,
+    'contacted' : IDL.Null,
+  });
   const Order = IDL.Record({
     'id' : IDL.Nat,
     'customerName' : IDL.Text,
     'status' : OrderStatus,
     'owner' : IDL.Principal,
     'paymentContactStatus' : PaymentContactStatus,
-    'createdTime' : Time,
+    'createdTime' : IDL.Int,
     'email' : IDL.Text,
     'shippingAddress' : ShippingAddress,
     'idInfo' : IDInformation,
@@ -219,14 +216,18 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'assignAdminRoleToCaller' : IDL.Func([], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'ensureUserRole' : IDL.Func([], [], []),
+    'createOrder' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, ShippingAddress, IDInformation],
+        [IDL.Nat],
+        [],
+      ),
     'getAllOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getMyOrders' : IDL.Func([], [IDL.Vec(Order)], ['query']),
     'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(Order)], ['query']),
-    'getOrderStatus' : IDL.Func([IDL.Nat], [IDL.Opt(OrderStatus)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -234,11 +235,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'submitOrder' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, ShippingAddress, IDInformation],
-        [IDL.Nat],
-        [],
-      ),
     'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
     'updatePaymentContactStatus' : IDL.Func(
         [IDL.Nat, PaymentContactStatus, IDL.Text],

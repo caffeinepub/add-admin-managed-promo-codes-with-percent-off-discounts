@@ -1,73 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Fix profile save/admin access by reliably ensuring '#user' role after Internet Identity login",
+  "title": "Temporarily display logged-in user principal ID on Home page footer",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
+      "text": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "recent-12",
+          "recent-13"
         ],
         "quotes": [
-          "Yes please"
+          "main/home,  automatically remove the display, current users ID",
+          "You never made the principle ID thing like we talked about do that now"
         ]
       },
       "acceptanceCriteria": [
-        "After a successful Internet Identity login, ensureUserRole() is invoked once for that principal without requiring a manual page refresh.",
-        "If the actor is recreated (e.g., identity changes), ensureUserRole() is invoked again for the new principal.",
-        "The implementation does not require editing any files under frontend/src/hooks/useInternetIdentity.ts(x) or frontend/src/hooks/useActor.ts (immutable paths)."
+        "When not logged in, no Principal ID is shown anywhere on the Home page.",
+        "When logged in, the Home page shows a clearly labeled value (e.g., \"Principal ID:\") containing identity.getPrincipal().toText().",
+        "The Principal ID display is visually placed at the bottom of the Home page (in or directly above the global footer) and does not overlap other content on mobile or desktop.",
+        "The Principal ID display appears only on the Home route and does not appear on Order, Prices, Profile, My Orders, or Admin pages."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+      "text": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2",
-          "msg-6"
+          "recent-14"
         ],
         "quotes": [
-          "I tried to change it and this still pops up",
-          "Yes please"
+          "build it"
         ]
       },
       "acceptanceCriteria": [
-        "When saveCallerUserProfile fails, the UI shows a human-readable error string derived from the thrown error (e.g., includes 'Unauthorized' or trap message when present).",
-        "The existing generic destructive alert remains, but includes additional details when available.",
-        "No sensitive secrets (e.g., admin token query param values) are ever rendered in the UI."
+        "Clicking the copy control copies the exact Principal ID text to the clipboard.",
+        "After copying, the UI shows an English success message (e.g., \"Copied\").",
+        "If clipboard copy fails, the UI shows an English error message (e.g., \"Copy failed\")."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+      "text": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "recent-12"
         ],
         "quotes": [
-          "Yes please"
+          "automatically remove the display"
         ]
       },
       "acceptanceCriteria": [
-        "On an ensureUserRole() failure, the browser console includes one labeled debug log entry containing the principal string and the error message (if available).",
-        "EnsureUserRole failure logging does not spam repeatedly for the same principal in a stable session."
+        "The Principal ID display code is confined to a single, clearly named component or guarded block.",
+        "Removing that component/block fully removes the Principal ID display without breaking the global footer layout or navigation."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister (all logic in backend/main.mo).",
-    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui.",
-    "Do not introduce third-party auth providers; only Internet Identity is supported."
+    "Do not modify files under frontend/src/components/ui (compose existing UI components instead).",
+    "Do not edit any frontend paths listed as immutable in SYSTEM_CONTEXT.",
+    "No backend changes are required for displaying the Principal ID; derive it from the authenticated identity already available in the frontend."
   ],
   "nonGoals": [
-    "Changing the backend admin auto-promotion rule (the special email check) or adding new admin management UI.",
-    "Adding new authentication methods or external database/storage systems.",
-    "Implementing real-time updates (WebSockets/push notifications)."
+    "Do not add any new admin-panel functionality or other admin updates in this change set.",
+    "Do not introduce new authentication providers; continue using Internet Identity only.",
+    "Do not persist the Principal ID to the backend or store it in canister state."
   ],
   "imageRequirements": {
     "required": [],

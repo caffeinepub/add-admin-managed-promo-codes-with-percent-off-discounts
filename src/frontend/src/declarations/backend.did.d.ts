@@ -27,7 +27,7 @@ export interface Order {
   'status' : OrderStatus,
   'owner' : Principal,
   'paymentContactStatus' : PaymentContactStatus,
-  'createdTime' : Time,
+  'createdTime' : bigint,
   'email' : string,
   'shippingAddress' : ShippingAddress,
   'idInfo' : IDInformation,
@@ -45,7 +45,6 @@ export interface ShippingAddress {
   'city' : string,
   'state' : string,
 }
-export type Time = bigint;
 export interface UserProfile {
   'name' : string,
   'email' : string,
@@ -82,21 +81,20 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'assignAdminRoleToCaller' : ActorMethod<[], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'ensureUserRole' : ActorMethod<[], undefined>,
+  'createOrder' : ActorMethod<
+    [string, string, string, ShippingAddress, IDInformation],
+    bigint
+  >,
   'getAllOrders' : ActorMethod<[], Array<Order>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getMyOrders' : ActorMethod<[], Array<Order>>,
   'getOrder' : ActorMethod<[bigint], [] | [Order]>,
-  'getOrderStatus' : ActorMethod<[bigint], [] | [OrderStatus]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'submitOrder' : ActorMethod<
-    [string, string, string, ShippingAddress, IDInformation],
-    bigint
-  >,
   'updateOrderStatus' : ActorMethod<[bigint, OrderStatus], undefined>,
   'updatePaymentContactStatus' : ActorMethod<
     [bigint, PaymentContactStatus, string],

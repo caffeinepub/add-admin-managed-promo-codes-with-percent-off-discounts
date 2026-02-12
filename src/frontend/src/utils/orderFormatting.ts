@@ -1,9 +1,9 @@
-import type { Time, OrderStatus, PaymentContactStatus } from '../backend';
+import type { OrderStatus, PaymentContactStatus } from '../backend';
 
 /**
  * Format a backend Time (bigint nanoseconds) to a readable date string
  */
-export function formatOrderDate(time: Time): string {
+export function formatOrderDate(time: bigint): string {
   // Convert nanoseconds to milliseconds
   const milliseconds = Number(time / 1000000n);
   const date = new Date(milliseconds);

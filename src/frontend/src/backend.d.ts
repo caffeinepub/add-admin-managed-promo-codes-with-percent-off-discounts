@@ -14,7 +14,6 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export type Time = bigint;
 export interface IDInformation {
     sex: string;
     weight: string;
@@ -37,7 +36,7 @@ export interface Order {
     status: OrderStatus;
     owner: Principal;
     paymentContactStatus: PaymentContactStatus;
-    createdTime: Time;
+    createdTime: bigint;
     email: string;
     shippingAddress: ShippingAddress;
     idInfo: IDInformation;
@@ -64,18 +63,17 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    assignAdminRoleToCaller(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    ensureUserRole(): Promise<void>;
+    createOrder(customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation): Promise<bigint>;
     getAllOrders(): Promise<Array<Order>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMyOrders(): Promise<Array<Order>>;
     getOrder(orderId: bigint): Promise<Order | null>;
-    getOrderStatus(orderId: bigint): Promise<OrderStatus | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    submitOrder(customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation): Promise<bigint>;
-    updateOrderStatus(orderId: bigint, newStatus: OrderStatus): Promise<void>;
-    updatePaymentContactStatus(orderId: bigint, newStatus: PaymentContactStatus, notes: string): Promise<void>;
+    updateOrderStatus(orderId: bigint, status: OrderStatus): Promise<void>;
+    updatePaymentContactStatus(orderId: bigint, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
 }

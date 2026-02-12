@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-ensure-the-frontend-reliably-calls-the-backend-method-ensureuserrole-immediately-after-a-successful-internet-identity-authentication-and-whenever-an-authenticated-actor-becomes-available-so-newly-authenticated-principals-always-receive-the-user-role-before-profile-save-admin-checks-run",
-      "featureTitle": "Ensure the frontend reliably calls the backend method ensureUserRole() immediately after a successful Internet Identity authentication and whenever an authenticated actor becomes available, so newly authenticated principals always receive the '#user' role before profile save/admin checks run.",
+      "featureId": "feature-on-the-main-home-page-only-when-the-user-is-authenticated-via-internet-identity-display-the-current-user-s-principal-id-at-the-very-bottom-of-the-page-footer-area",
+      "featureTitle": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
       "files": [
-        "frontend/src/components/LoginButton.tsx",
-        "frontend/src/hooks/useEnsureUserRole.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/PrincipalIdFooterBlock.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,11 +23,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-the-profile-page-save-failure-feedback-by-displaying-the-underlying-backend-error-message-when-available-in-addition-to-the-generic-failed-to-save-profile-message-to-make-role-authorization-failures-diagnosable-during-testing",
-      "featureTitle": "Improve the Profile page save failure feedback by displaying the underlying backend error message (when available) in addition to the generic 'Failed to save profile' message, to make role/authorization failures diagnosable during testing.",
+      "featureId": "feature-add-a-one-click-copy-to-clipboard-control-next-to-the-displayed-principal-id-on-the-home-page-with-user-facing-feedback-text-in-english-indicating-success-or-failure",
+      "featureTitle": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
       "files": [
-        "frontend/src/pages/ProfilePage.tsx",
-        "frontend/src/utils/errorFormatting.ts"
+        "frontend/src/components/PrincipalIdFooterBlock.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,10 +43,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-minimal-regression-check-in-code-not-an-external-test-framework-requirement-to-prevent-silent-failures-of-ensureuserrole-log-a-single-clearly-labeled-debug-message-when-ensureuserrole-fails-after-authentication-including-the-principal-string-and-the-error-message-if-any",
-      "featureTitle": "Add a minimal regression check (in code, not an external test framework requirement) to prevent silent failures of ensureUserRole(): log a single, clearly labeled debug message when ensureUserRole() fails after authentication, including the principal string and the error message (if any).",
+      "featureId": "feature-implement-the-principal-id-display-as-an-easily-removable-clearly-isolated-ui-block-e-g-a-small-component-or-guarded-block-so-it-can-be-deleted-in-a-follow-up-update-without-impacting-other-footer-features",
+      "featureTitle": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
       "files": [
-        "frontend/src/hooks/useEnsureUserRole.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/PrincipalIdFooterBlock.tsx"
       ],
       "components": [
         "authorization@4.0.0",

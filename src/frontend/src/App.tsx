@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEnsureUserRole } from './hooks/useEnsureUserRole';
+import { useProfileGate } from './hooks/useProfileGate';
 import HomePage from './pages/HomePage';
 import OrderPage from './pages/OrderPage';
 import PricesPage from './pages/PricesPage';
@@ -11,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
 import LoginButton from './components/LoginButton';
+import PrincipalIdFooterBlock from './components/PrincipalIdFooterBlock';
 import { useCheckAdminAccess } from './hooks/useAdmin';
 import { Menu, X, User } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
@@ -23,6 +25,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { identity } = useInternetIdentity();
   const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched } = useCheckAdminAccess();
+  const { mustSetupProfile, isCheckingProfile } = useProfileGate();
   const queryClient = useQueryClient();
 
   // Automatically ensure user role after authentication
@@ -61,6 +64,17 @@ function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Profile gate: redirect to profile if authenticated user has no profile
+  useEffect(() => {
+    if (!isCheckingProfile && mustSetupProfile) {
+      // Only redirect if trying to access protected routes
+      const protectedRoutes: Route[] = ['order', 'my-orders', 'admin', 'admin-order-details'];
+      if (protectedRoutes.includes(currentRoute)) {
+        window.location.hash = '/profile';
+      }
+    }
+  }, [mustSetupProfile, isCheckingProfile, currentRoute]);
 
   const navigate = (path: string) => {
     window.location.hash = path;
@@ -262,6 +276,9 @@ function App() {
               Deployment Guide
             </a>
           </div>
+          
+          {/* Principal ID Display - Only on Home route */}
+          {currentRoute === 'home' && <PrincipalIdFooterBlock />}
         </div>
       </footer>
     </div>
