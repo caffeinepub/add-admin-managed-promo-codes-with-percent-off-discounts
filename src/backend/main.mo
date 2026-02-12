@@ -1,14 +1,14 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
+import Set "mo:core/Set";
+import Runtime "mo:core/Runtime";
+
 import Storage "blob-storage/Storage";
+import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
-
-
 
 actor {
   type Time = Int;
@@ -76,8 +76,17 @@ actor {
   let orders = Map.empty<Nat, Order>();
   var nextOrderId : Nat = 0;
 
-  // Track if any admin has ever been assigned (for bootstrap safety)
-  var hasHadAdmin : Bool = false;
+  // Track if bootstrap admin has been assigned
+  var bootstrapAdminAssigned = false;
+
+  // The specific principal allowed to bootstrap as admin
+  let BOOTSTRAP_ADMIN_PRINCIPAL = Principal.fromText("jpmy2-7y5t4-jv5ee-rzfvm-562pu-czjjc-zj4oz-ohmp2-6h3al-3az2q-7qe");
+
+  // Admin invitations by principal
+  let adminInvitations = Set.empty<Principal>();
+
+  // Email to principal mapping for invitation lookup
+  let emailToPrincipal = Map.empty<Text, Principal>();
 
   // User Profile Functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -99,6 +108,8 @@ actor {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
+    // Update email mapping for admin invitation lookup
+    emailToPrincipal.add(profile.email, caller);
   };
 
   // Order Management Functions
@@ -169,7 +180,7 @@ actor {
   };
 
   public shared ({ caller }) func updateOrderStatus(orderId : Nat, status : OrderStatus) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
       Runtime.trap("Unauthorized: Only admins can update order status");
     };
 
@@ -191,7 +202,7 @@ actor {
     paymentContactStatus : PaymentContactStatus,
     contactNotes : Text,
   ) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
       Runtime.trap("Unauthorized: Only admins can update payment contact status");
     };
 
@@ -210,30 +221,141 @@ actor {
     };
   };
 
-  // Bootstrap function to safely restore admin access
-  // SECURITY: Only callable by canister controllers and only when no admins exist
+  public shared ({ caller }) func updateOrder(
+    orderId : Nat,
+    customerName : Text,
+    email : Text,
+    phone : Text,
+    shippingAddress : ShippingAddress,
+    idInfo : IDInformation,
+    status : OrderStatus,
+    paymentContactStatus : PaymentContactStatus,
+    contactNotes : Text,
+  ) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
+      Runtime.trap("Unauthorized: Only admins can edit orders");
+    };
+
+    switch (orders.get(orderId)) {
+      case (null) {
+        Runtime.trap("Order not found");
+      };
+      case (?order) {
+        let updatedOrder = {
+          order with
+          customerName = customerName;
+          email = email;
+          phone = phone;
+          shippingAddress = shippingAddress;
+          idInfo = idInfo;
+          status = status;
+          paymentContactStatus = paymentContactStatus;
+          contactNotes = contactNotes;
+        };
+        orders.add(orderId, updatedOrder);
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteOrder(orderId : Nat) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
+      Runtime.trap("Unauthorized: Only admins can delete orders");
+    };
+
+    switch (orders.get(orderId)) {
+      case (null) {
+        Runtime.trap("Order not found");
+      };
+      case (?_order) {
+        orders.remove(orderId);
+      };
+    };
+  };
+
+  // Admin Invitation Functions
+  public query ({ caller }) func checkAdminInvitation() : async Bool {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can check invitations");
+    };
+    adminInvitations.contains(caller);
+  };
+
+  public shared ({ caller }) func acceptAdminInvitation() : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can accept invitations");
+    };
+
+    if (not adminInvitations.contains(caller)) {
+      Runtime.trap("No admin invitation found");
+    };
+
+    AccessControl.assignRole(accessControlState, caller, caller, #admin);
+    adminInvitations.remove(caller);
+  };
+
+  public shared ({ caller }) func declineAdminInvitation() : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can decline invitations");
+    };
+
+    if (not adminInvitations.contains(caller)) {
+      Runtime.trap("No admin invitation found");
+    };
+    adminInvitations.remove(caller);
+  };
+
+  public shared ({ caller }) func sendAdminInvitationByEmail(email : Text) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
+      Runtime.trap("Unauthorized: Only admins can send invitations");
+    };
+
+    switch (emailToPrincipal.get(email)) {
+      case (null) {
+        Runtime.trap("User with email not found. User must have a profile first.");
+      };
+      case (?userPrincipal) {
+        adminInvitations.add(userPrincipal);
+      };
+    };
+  };
+
+  public shared ({ caller }) func sendAdminInvitation(user : Principal) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) {
+      Runtime.trap("Unauthorized: Only admins can send invitations");
+    };
+    adminInvitations.add(user);
+  };
+
+  // Bootstrap function - SECURITY CRITICAL
+  // Only allows the specific bootstrap principal to become admin, and only once
   public shared ({ caller }) func assignAdminRoleToCaller() : async () {
-    // First check: caller must not already be an admin
+    // SECURITY: Only the designated bootstrap principal can call this
+    if (caller != BOOTSTRAP_ADMIN_PRINCIPAL) {
+      Runtime.trap("Unauthorized: Only the designated bootstrap principal can use this function");
+    };
+
+    // SECURITY: Can only be used once to prevent abuse
+    if (bootstrapAdminAssigned) {
+      Runtime.trap("Bootstrap admin has already been assigned");
+    };
+
+    // SECURITY: Verify caller is not already an admin
     if (AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Caller is already an admin");
     };
 
-    // Third check: only allow bootstrap if we've never had an admin (initial setup)
-    // OR if there are currently no admins (recovery scenario)
-    // This prevents abuse while allowing legitimate recovery
-    if (hasHadAdmin) {
-      // In recovery mode, we need to verify no current admins exist
-      // Since we don't have getNumberAdmins, we check if caller would be granted admin
-      // The AccessControl.assignRole itself should have admin-only guard,
-      // but we're in a special bootstrap case
-      // We'll attempt the assignment and let it fail if there are existing admins
-    };
-
-    // Assign admin role to the controller
+    // Assign admin role to the bootstrap principal
     AccessControl.assignRole(accessControlState, caller, caller, #admin);
 
-    // Mark that we've had at least one admin
-    hasHadAdmin := true;
+    // Mark bootstrap as complete
+    bootstrapAdminAssigned := true;
+  };
+
+  // Admin check function for frontend - requires authentication
+  public query ({ caller }) func isAdmin() : async Bool {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only authenticated users can check admin status");
+    };
+    AccessControl.isAdmin(accessControlState, caller);
   };
 };
-

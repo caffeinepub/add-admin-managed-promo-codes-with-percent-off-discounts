@@ -63,17 +63,25 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    acceptAdminInvitation(): Promise<void>;
     assignAdminRoleToCaller(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    checkAdminInvitation(): Promise<boolean>;
     createOrder(customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation): Promise<bigint>;
+    declineAdminInvitation(): Promise<void>;
+    deleteOrder(orderId: bigint): Promise<void>;
     getAllOrders(): Promise<Array<Order>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMyOrders(): Promise<Array<Order>>;
     getOrder(orderId: bigint): Promise<Order | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendAdminInvitation(user: Principal): Promise<void>;
+    sendAdminInvitationByEmail(email: string): Promise<void>;
+    updateOrder(orderId: bigint, customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation, status: OrderStatus, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
     updateOrderStatus(orderId: bigint, status: OrderStatus): Promise<void>;
     updatePaymentContactStatus(orderId: bigint, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
 }

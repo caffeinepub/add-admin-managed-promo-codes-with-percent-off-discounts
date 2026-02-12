@@ -156,17 +156,25 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    acceptAdminInvitation(): Promise<void>;
     assignAdminRoleToCaller(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    checkAdminInvitation(): Promise<boolean>;
     createOrder(customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation): Promise<bigint>;
+    declineAdminInvitation(): Promise<void>;
+    deleteOrder(orderId: bigint): Promise<void>;
     getAllOrders(): Promise<Array<Order>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMyOrders(): Promise<Array<Order>>;
     getOrder(orderId: bigint): Promise<Order | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendAdminInvitation(user: Principal): Promise<void>;
+    sendAdminInvitationByEmail(email: string): Promise<void>;
+    updateOrder(orderId: bigint, customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation, status: OrderStatus, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
     updateOrderStatus(orderId: bigint, status: OrderStatus): Promise<void>;
     updatePaymentContactStatus(orderId: bigint, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
 }
@@ -271,6 +279,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async acceptAdminInvitation(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.acceptAdminInvitation();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.acceptAdminInvitation();
+            return result;
+        }
+    }
     async assignAdminRoleToCaller(): Promise<void> {
         if (this.processError) {
             try {
@@ -299,6 +321,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async checkAdminInvitation(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.checkAdminInvitation();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.checkAdminInvitation();
+            return result;
+        }
+    }
     async createOrder(arg0: string, arg1: string, arg2: string, arg3: ShippingAddress, arg4: IDInformation): Promise<bigint> {
         if (this.processError) {
             try {
@@ -310,6 +346,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.createOrder(arg0, arg1, arg2, arg3, await to_candid_IDInformation_n10(this._uploadFile, this._downloadFile, arg4));
+            return result;
+        }
+    }
+    async declineAdminInvitation(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.declineAdminInvitation();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.declineAdminInvitation();
+            return result;
+        }
+    }
+    async deleteOrder(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteOrder(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteOrder(arg0);
             return result;
         }
     }
@@ -397,6 +461,20 @@ export class Backend implements backendInterface {
             return from_candid_opt_n24(this._uploadFile, this._downloadFile, result);
         }
     }
+    async isAdmin(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isAdmin();
+            return result;
+        }
+    }
     async isCallerAdmin(): Promise<boolean> {
         if (this.processError) {
             try {
@@ -422,6 +500,48 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async sendAdminInvitation(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendAdminInvitation(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendAdminInvitation(arg0);
+            return result;
+        }
+    }
+    async sendAdminInvitationByEmail(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendAdminInvitationByEmail(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendAdminInvitationByEmail(arg0);
+            return result;
+        }
+    }
+    async updateOrder(arg0: bigint, arg1: string, arg2: string, arg3: string, arg4: ShippingAddress, arg5: IDInformation, arg6: OrderStatus, arg7: PaymentContactStatus, arg8: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateOrder(arg0, arg1, arg2, arg3, arg4, await to_candid_IDInformation_n10(this._uploadFile, this._downloadFile, arg5), to_candid_OrderStatus_n28(this._uploadFile, this._downloadFile, arg6), to_candid_PaymentContactStatus_n30(this._uploadFile, this._downloadFile, arg7), arg8);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateOrder(arg0, arg1, arg2, arg3, arg4, await to_candid_IDInformation_n10(this._uploadFile, this._downloadFile, arg5), to_candid_OrderStatus_n28(this._uploadFile, this._downloadFile, arg6), to_candid_PaymentContactStatus_n30(this._uploadFile, this._downloadFile, arg7), arg8);
             return result;
         }
     }

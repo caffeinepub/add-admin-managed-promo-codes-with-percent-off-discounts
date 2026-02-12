@@ -2,31 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-on-the-main-home-page-only-when-the-user-is-authenticated-via-internet-identity-display-the-current-user-s-principal-id-at-the-very-bottom-of-the-page-footer-area",
-      "featureTitle": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
+      "featureId": "feature-fix-the-frontend-header-so-the-admin-panel-button-appears-in-the-top-navigation-as-shown-in-the-uploaded-screenshot-when-the-logged-in-principal-is-an-admin-and-clicking-it-navigates-directly-to-the-admin-panel-route",
+      "featureTitle": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/PrincipalIdFooterBlock.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-one-click-copy-to-clipboard-control-next-to-the-displayed-principal-id-on-the-home-page-with-user-facing-feedback-text-in-english-indicating-success-or-failure",
-      "featureTitle": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
-      "files": [
-        "frontend/src/components/PrincipalIdFooterBlock.tsx"
+        "frontend/src/hooks/useAdmin.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-the-principal-id-display-as-an-easily-removable-clearly-isolated-ui-block-e-g-a-small-component-or-guarded-block-so-it-can-be-deleted-in-a-follow-up-update-without-impacting-other-footer-features",
-      "featureTitle": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
+      "featureId": "feature-make-the-admin-invitation-accept-decline-modal-appear-automatically-immediately-after-login-whenever-the-logged-in-principal-has-a-pending-admin-invitation-and-ensure-it-is-not-suppressed-by-initial-authorization-role-check-timing",
+      "featureTitle": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/PrincipalIdFooterBlock.tsx"
+        "frontend/src/hooks/useAdminInvitation.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -60,6 +40,28 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-accepting-an-admin-invitation-grants-admin-access-and-immediately-updates-the-ui-so-the-admin-panel-button-becomes-visible-without-requiring-a-page-refresh",
+      "featureTitle": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/admin/AdminInvitationModal.tsx",
+        "frontend/src/hooks/useAdminInvitation.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

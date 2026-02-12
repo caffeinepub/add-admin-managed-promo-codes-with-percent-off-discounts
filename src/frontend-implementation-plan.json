@@ -1,63 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Show authenticated user's Principal ID in Home footer with copy control",
+  "title": "Fix admin nav visibility and ensure admin invitation modal reliably auto-opens after login",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Show the authenticated user's Principal ID at the bottom of the Home page only.",
+      "id": "REQ-2",
+      "summary": "Show the “Admin Panel” button in the header only for authenticated admins and navigate directly to #/admin when clicked.",
       "acceptanceCriteria": [
-        "When not logged in, no Principal ID is shown anywhere on the Home page.",
-        "When logged in, the Home page shows a clearly labeled value (e.g., \"Principal ID:\") containing identity.getPrincipal().toText().",
-        "The Principal ID display is visually placed at the bottom of the Home page (in or directly above the global footer) and does not overlap other content on mobile or desktop.",
-        "The Principal ID display appears only on the Home route and does not appear on Order, Prices, Profile, My Orders, or Admin pages."
+        "When logged out, no admin button/link is shown.",
+        "When logged in as a non-admin, no admin button/link is shown.",
+        "When logged in as an admin, “Admin Panel” is visible in the desktop header navigation and in the mobile menu, and clicking it navigates to `#/admin`."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
-          "operation": "create",
-          "description": "Create a small, self-contained footer UI block that reads the authenticated Internet Identity from the authorization component (useInternetIdentity) and renders a labeled Principal ID string using identity.getPrincipal().toText() only when identity is present. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/hooks/useAdmin.ts",
+          "operation": "modify",
+          "description": "Harden admin detection by using the backend role-check capability exposed by the authorization system: attempt `actor.isCallerAdmin()` and fall back to `actor.isAdmin()` if needed, while ensuring non-admin callers resolve to `false` without breaking rendering. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the PrincipalIdFooterBlock into the global footer but guard rendering so it appears only when currentRoute is 'home' (and relies on the block itself to render nothing if not authenticated), ensuring it is placed at the bottom/footer area and does not affect other routes."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Add copy-to-clipboard control next to the displayed Principal ID with success/failure feedback.",
-      "acceptanceCriteria": [
-        "Clicking the copy control copies the exact Principal ID text to the clipboard.",
-        "After copying, the UI shows an English success message (e.g., \"Copied\").",
-        "If clipboard copy fails, the UI shows an English error message (e.g., \"Copy failed\")."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
-          "operation": "modify",
-          "description": "Implement a one-click copy control adjacent to the Principal ID that uses the browser clipboard API to copy the exact Principal ID text, and render English success/error feedback states for copy result. Verify the component's usage instructions before implementing."
+          "description": "Ensure the header’s “Admin Panel” button is rendered based on the updated `useCheckAdminAccess()` result and navigates to `#/admin` in both desktop navigation and the mobile menu (no change to overall layout beyond visibility). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Isolate the Principal ID display into an easily removable UI block.",
+      "summary": "Automatically open the admin invitation accept/decline modal immediately after login when there is a pending admin invitation, with automatic re-checks to avoid timing suppression.",
       "acceptanceCriteria": [
-        "The Principal ID display code is confined to a single, clearly named component or guarded block.",
-        "Removing that component/block fully removes the Principal ID display without breaking the global footer layout or navigation."
+        "When a principal with a pending invitation logs in, the “Admin Access Invitation” modal opens automatically without requiring any user click.",
+        "If the invitation status initially fails due to role/authorization timing, the app automatically re-checks and still shows the modal once the user is fully initialized (no manual refresh required).",
+        "If there is no pending invitation, the modal does not appear."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "path": "frontend/src/hooks/useAdminInvitation.ts",
           "operation": "modify",
-          "description": "Ensure the Principal ID display, copy behavior, and feedback UI are fully contained within this single component, with minimal/clean props and a clear internal guard that returns null when not authenticated, so deleting this file and its import removes the feature without impacting other footer content."
+          "description": "Adjust invitation checking to be resilient to early-login authorization timing (authorization component): treat transient authorization/trap failures as retryable rather than as a definitive `false`, and configure React Query retries/delays so a pending invitation is eventually detected once the caller is fully initialized. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Keep the wiring to a single import and a single guarded render location in the footer so the feature can be removed by deleting the import and JSX block without affecting footer layout or navigation."
+          "description": "Update the modal auto-open logic to avoid being gated by an early, transient ‘false’ invitation result; ensure the modal opens as soon as the invitation query resolves true after login without requiring navigation or refresh. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "After accepting an admin invitation, update cached role state so the Admin Panel button becomes visible immediately (same session) without refresh; declining clears the invitation and closes the modal.",
+      "acceptanceCriteria": [
+        "After clicking “Accept & Become Admin”, the backend assigns the admin role to the caller and clears the invitation.",
+        "After acceptance completes, the invitation modal closes and the top-bar “Admin Panel” button appears during the same session without a manual reload.",
+        "After clicking “Decline”, the backend clears the invitation and the modal closes; the user does not become admin."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useAdminInvitation.ts",
+          "operation": "modify",
+          "description": "Ensure the accept/decline mutations invalidate and refetch all role-related queries needed for immediate UI updates (admin status + invitation status), aligned with the authorization component’s role-check behavior, so the header reacts without reload. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminInvitationModal.tsx",
+          "operation": "modify",
+          "description": "After a successful accept/decline action, ensure the modal closes reliably and does not reopen from stale state while role/invitation queries refetch; keep existing UI components composed (do not edit ui library files). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Confirm the header’s “Admin Panel” visibility reacts to the post-accept refetch of admin status during the same session (no refresh), including in the mobile menu. Verify the component's usage instructions before implementing."
         }
       ]
     }

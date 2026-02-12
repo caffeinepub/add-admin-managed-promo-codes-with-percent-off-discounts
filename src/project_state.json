@@ -1,32 +1,37 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "summary": "Implement admin access UI: a top-bar Admin button shown only to admins that opens the admin panel, plus an accept/decline admin invitation popup that auto-appears on login for invited principals.",
+  "architectural_notes": [
+    "Role-based UI gating: show Admin nav button only when user has admin role/flag",
+    "On login, check for pending admin invitations for the current principal and trigger invitation modal automatically"
+  ],
+  "known_issues": [
+    "Admin panel link/button and admin invitation accept/decline popup are not currently appearing as expected"
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-on-the-main-home-page-only-when-the-user-is-authenticated-via-internet-identity-display-the-current-user-s-principal-id-at-the-very-bottom-of-the-page-footer-area",
-      "title": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-one-click-copy-to-clipboard-control-next-to-the-displayed-principal-id-on-the-home-page-with-user-facing-feedback-text-in-english-indicating-success-or-failure",
-      "title": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
+      "id": "feature-fix-the-frontend-header-so-the-admin-panel-button-appears-in-the-top-navigation-as-shown-in-the-uploaded-screenshot-when-the-logged-in-principal-is-an-admin-and-clicking-it-navigates-directly-to-the-admin-panel-route",
+      "title": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-the-principal-id-display-as-an-easily-removable-clearly-isolated-ui-block-e-g-a-small-component-or-guarded-block-so-it-can-be-deleted-in-a-follow-up-update-without-impacting-other-footer-features",
-      "title": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
+      "id": "feature-make-the-admin-invitation-accept-decline-modal-appear-automatically-immediately-after-login-whenever-the-logged-in-principal-has-a-pending-admin-invitation-and-ensure-it-is-not-suppressed-by-initial-authorization-role-check-timing",
+      "title": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-accepting-an-admin-invitation-grants-admin-access-and-immediately-updates-the-ui-so-the-admin-panel-button-becomes-visible-without-requiring-a-page-refresh",
+      "title": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -34,12 +39,27 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Display current user's principal ID on main/home page temporarily, then automatically remove the display after user sends the ID",
+      "summary": "Add an Admin button to the top navigation bar that is only visible to admin users and opens the admin panel directly when clicked",
       "reqIds": [],
-      "status": "in_progress"
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Show an accept/decline admin invitation popup automatically upon login when the logged-in principal has a pending admin invitation",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Temporarily display logged-in user principal ID on Home page footer",
+  "gameProjectType": "none",
+  "projectName": "Fix admin top-bar button visibility and auto admin-invitation accept/decline popup on login",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

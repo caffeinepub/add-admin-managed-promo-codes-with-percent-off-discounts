@@ -1,74 +1,102 @@
 {
   "kind": "build_request",
-  "title": "Temporarily display logged-in user principal ID on Home page footer",
-  "priority": "normal",
+  "title": "Fix admin top-bar button visibility and auto admin-invitation accept/decline popup on login",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
-      "target": "frontend",
+      "text": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "recent-12",
-          "recent-13"
+          "msg-5",
+          "msg-7",
+          "msg-9"
         ],
         "quotes": [
-          "main/home,  automatically remove the display, current users ID",
-          "You never made the principle ID thing like we talked about do that now"
+          "Ok admin panel IS still not popping up",
+          "yea a button at the top by all these only sown if there a admin (and accept invitation pop up)",
+          "open panel directly"
         ]
       },
       "acceptanceCriteria": [
-        "When not logged in, no Principal ID is shown anywhere on the Home page.",
-        "When logged in, the Home page shows a clearly labeled value (e.g., \"Principal ID:\") containing identity.getPrincipal().toText().",
-        "The Principal ID display is visually placed at the bottom of the Home page (in or directly above the global footer) and does not overlap other content on mobile or desktop.",
-        "The Principal ID display appears only on the Home route and does not appear on Order, Prices, Profile, My Orders, or Admin pages."
+        "Backend canister provides a publicly callable method that matches what the frontend calls (currently `actor.isCallerAdmin()` in `frontend/src/hooks/useAdmin.ts`).",
+        "Calling the admin-check method as a non-admin returns `false` (and does not trap) so the frontend can distinguish non-admin from errors.",
+        "Calling the admin-check method as an admin returns `true`."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
+      "text": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-14"
+          "msg-7",
+          "msg-9"
         ],
         "quotes": [
-          "build it"
+          "up here where the other buttons are in photo,",
+          "open panel directly"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the copy control copies the exact Principal ID text to the clipboard.",
-        "After copying, the UI shows an English success message (e.g., \"Copied\").",
-        "If clipboard copy fails, the UI shows an English error message (e.g., \"Copy failed\")."
+        "When logged out, no admin button/link is shown.",
+        "When logged in as a non-admin, no admin button/link is shown.",
+        "When logged in as an admin, “Admin Panel” is visible in the desktop header navigation and in the mobile menu, and clicking it navigates to `#/admin`."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
+      "text": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-12"
+          "msg-5",
+          "msg-7",
+          "msg-9"
         ],
         "quotes": [
-          "automatically remove the display"
+          "nor is the popup to accept or decline the admin invitation to the principle ID i sent",
+          "(and accept invitation pop up)",
+          "as soon as a user logs in with an invited principa"
         ]
       },
       "acceptanceCriteria": [
-        "The Principal ID display code is confined to a single, clearly named component or guarded block.",
-        "Removing that component/block fully removes the Principal ID display without breaking the global footer layout or navigation."
+        "When a principal with a pending invitation logs in, the “Admin Access Invitation” modal opens automatically without requiring any user click.",
+        "If the invitation status initially fails due to role/authorization timing, the app automatically re-checks and still shows the modal once the user is fully initialized (no manual refresh required).",
+        "If there is no pending invitation, the modal does not appear."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-5",
+          "msg-9"
+        ],
+        "quotes": [
+          "nor is the popup to accept or decline the admin invitation to the principle ID i sent",
+          "as soon as a user logs in with an invited principa"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After clicking “Accept & Become Admin”, the backend assigns the admin role to the caller and clears the invitation.",
+        "After acceptance completes, the invitation modal closes and the top-bar “Admin Panel” button appears during the same session without a manual reload.",
+        "After clicking “Decline”, the backend clears the invitation and the modal closes; the user does not become admin."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (compose existing UI components instead).",
-    "Do not edit any frontend paths listed as immutable in SYSTEM_CONTEXT.",
-    "No backend changes are required for displaying the Principal ID; derive it from the authenticated identity already available in the frontend."
+    "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
+    "Do not edit any files under `frontend/src/components/ui` or any other paths listed in `frontend.immutablePaths`. Compose existing UI components instead.",
+    "Only add `backend/migration.mo` changes if state schema upgrades are required; otherwise keep migration as-is."
   ],
   "nonGoals": [
-    "Do not add any new admin-panel functionality or other admin updates in this change set.",
-    "Do not introduce new authentication providers; continue using Internet Identity only.",
-    "Do not persist the Principal ID to the backend or store it in canister state."
+    "Adding new admin features beyond making the existing admin UI entry point visible and the invitation modal appear (e.g., new admin pages, new order capabilities).",
+    "Implementing third-party authentication or any non-Internet-Identity auth.",
+    "Changing the app’s overall visual theme/layout beyond what’s necessary to correctly show the Admin Panel button in the existing header."
   ],
   "imageRequirements": {
     "required": [],

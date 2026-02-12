@@ -141,3 +141,64 @@ export function useUpdatePaymentContactStatus() {
     },
   });
 }
+
+export function useUpdateOrder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      customerName,
+      email,
+      phone,
+      shippingAddress,
+      idInfo,
+      status,
+      paymentContactStatus,
+      contactNotes,
+    }: {
+      orderId: bigint;
+      customerName: string;
+      email: string;
+      phone: string;
+      shippingAddress: ShippingAddress;
+      idInfo: IDInformation;
+      status: OrderStatus;
+      paymentContactStatus: PaymentContactStatus;
+      contactNotes: string;
+    }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.updateOrder(
+        orderId,
+        customerName,
+        email,
+        phone,
+        shippingAddress,
+        idInfo,
+        status,
+        paymentContactStatus,
+        contactNotes
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order', variables.orderId.toString()] });
+    },
+  });
+}
+
+export function useDeleteOrder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderId: bigint) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.deleteOrder(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}

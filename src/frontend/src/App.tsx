@@ -3,6 +3,8 @@ import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEnsureUserRole } from './hooks/useEnsureUserRole';
 import { useProfileGate } from './hooks/useProfileGate';
+import { useCheckAdminInvitation } from './hooks/useAdminInvitation';
+import { useAdminBootstrap } from './hooks/useAdminBootstrap';
 import HomePage from './pages/HomePage';
 import OrderPage from './pages/OrderPage';
 import PricesPage from './pages/PricesPage';
@@ -12,9 +14,9 @@ import ProfilePage from './pages/ProfilePage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
 import LoginButton from './components/LoginButton';
-import PrincipalIdFooterBlock from './components/PrincipalIdFooterBlock';
+import AdminInvitationModal from './components/admin/AdminInvitationModal';
 import { useCheckAdminAccess } from './hooks/useAdmin';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, Shield } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
 
 type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details';
@@ -25,11 +27,26 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { identity } = useInternetIdentity();
   const { isAdmin, isLoading: adminCheckLoading, isFetched: adminCheckFetched } = useCheckAdminAccess();
+  const { hasInvitation, isFetched: invitationFetched, isLoading: invitationLoading } = useCheckAdminInvitation();
   const { mustSetupProfile, isCheckingProfile } = useProfileGate();
   const queryClient = useQueryClient();
 
   // Automatically ensure user role after authentication
   useEnsureUserRole();
+
+  // Automatically bootstrap designated admin principal after login
+  useAdminBootstrap();
+
+  // Admin invitation modal state
+  const [showInvitationModal, setShowInvitationModal] = useState(false);
+
+  // Show invitation modal when user is authenticated and has a pending invitation
+  // Wait for invitation check to complete before showing modal
+  useEffect(() => {
+    if (identity && !invitationLoading && invitationFetched && hasInvitation && !showInvitationModal) {
+      setShowInvitationModal(true);
+    }
+  }, [identity, invitationLoading, invitationFetched, hasInvitation, showInvitationModal]);
 
   // Simple hash-based routing
   useEffect(() => {
@@ -96,6 +113,12 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Admin Invitation Modal */}
+      <AdminInvitationModal
+        open={showInvitationModal}
+        onOpenChange={setShowInvitationModal}
+      />
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between gap-4">
@@ -157,8 +180,9 @@ function App() {
             {showAdminLink && (
               <button
                 onClick={() => navigate('/admin')}
-                className="text-sm font-medium transition-colors hover:text-primary"
+                className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-2"
               >
+                <Shield className="h-4 w-4" />
                 Admin Panel
               </button>
             )}
@@ -218,8 +242,9 @@ function App() {
               {showAdminLink && (
                 <button
                   onClick={() => navigate('/admin')}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md"
+                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md flex items-center gap-2"
                 >
+                  <Shield className="h-4 w-4" />
                   Admin Panel
                 </button>
               )}
@@ -276,9 +301,6 @@ function App() {
               Deployment Guide
             </a>
           </div>
-          
-          {/* Principal ID Display - Only on Home route */}
-          {currentRoute === 'home' && <PrincipalIdFooterBlock />}
         </div>
       </footer>
     </div>

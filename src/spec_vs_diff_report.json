@@ -1,30 +1,75 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T03:48:17.796Z",
-  "summary": "A new, isolated Home-page footer block component was added to display the authenticated Internet Identity Principal ID with a copy-to-clipboard button and English success/failure feedback. App wiring appears to include conditional display on the home route per the provided diff summary.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-12T04:36:34.909Z",
+  "summary": "Frontend changes appear to implement admin gating (via useCheckAdminAccess), an auto-opening admin invitation modal on login (with retry logic for timing), and UI cache invalidation after accepting an invitation. However, the diff summary does not provide evidence that the backend now exposes the required `isCallerAdmin()` method (or that accept/decline invitation backend behavior is implemented), and several unrelated UI/content/theme and admin-management additions appear beyond scope.",
+  "missing_requirements": [
     {
-      "description": "Updated project metadata/state tracking (project_state.json) with AR-1..AR-4 entries unrelated to implementing the UI behavior itself.",
-      "reason": "The BuildRequest only asks for a temporary Principal ID display + copy control on the Home page; it does not request updating project tracking/state files.",
+      "id": "REQ-1",
+      "requirement": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably (frontend calls `actor.isCallerAdmin()`), returning false for non-admins without trapping.",
+      "reason": "The frontend hook calls `actor.isCallerAdmin()` (with fallback to `actor.isAdmin()`), but the backend diff snippet shown does not include any `public/shared` method definition for `isCallerAdmin` (or demonstrate its non-trapping false behavior for non-admins). With the backend file truncated, there is insufficient evidence the required method exists and matches what the frontend calls.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/hooks/useAdmin.ts",
+        "backend/main.mo (truncated; no visible isCallerAdmin implementation in shown excerpt)"
       ]
     },
     {
-      "description": "Added/updated a repository-wide summary file (frontend-file-summaries.txt) describing many unrelated changes (admin gating, order page disclaimer removals, tailwind config, deployment guide, etc.).",
-      "reason": "The BuildRequest is narrowly scoped to showing Principal ID on the Home page; generating/updating broad file summaries (especially mentioning unrelated feature work) is not requested.",
+      "id": "REQ-4",
+      "requirement": "Backend accepting/declining an admin invitation must (accept) grant admin and clear invitation, and (decline) clear invitation; UI updates in-session without refresh.",
+      "reason": "Frontend invalidation/refetch logic exists to update admin UI after acceptance, but the diff summary does not show backend implementations for `acceptAdminInvitation()` / `declineAdminInvitation()` that actually assign admin role and clear invitations. Backend file is truncated and contains only data structures in the visible excerpt.",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend/src/hooks/useAdminInvitation.ts",
+        "backend/main.mo (truncated; no visible acceptAdminInvitation/declineAdminInvitation implementation in shown excerpt)"
       ]
     }
   ],
-  "confidence": 0.74,
+  "hallucinated_features": [
+    {
+      "description": "Removed/changed legal notice, attestation checkbox, and disclaimer wording in order-related pages.",
+      "reason": "Not requested by the BuildRequest; non-goals include avoiding broader layout/theme/content changes beyond making the Admin button visible and the invitation modal appear.",
+      "evidence": [
+        "frontend-file-summaries.txt (OrderPage.tsx: removed legal notice/attestation; OrderConfirmationPage.tsx: removed novelty/legal disclaimer wording)"
+      ]
+    },
+    {
+      "description": "Expanded/altered admin order management features (e.g., filtering/search/statistics, delete confirmation, edit modes, added order update/delete hooks).",
+      "reason": "Explicit non-goal: adding new admin features beyond making the existing admin UI entry point visible and the invitation modal appear.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/pages/admin/AdminOrdersPage.tsx; frontend/src/pages/admin/AdminOrderDetailsPage.tsx; frontend/src/hooks/useOrders.ts)"
+      ]
+    },
+    {
+      "description": "Significant global styling/theme and Tailwind token changes (OKLCH color system, typography scale, new theme tokens).",
+      "reason": "Non-goal: changing the app’s overall visual theme/layout beyond what’s necessary to correctly show the Admin Panel button in the existing header.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/index.css; frontend/tailwind.config.js)"
+      ]
+    },
+    {
+      "description": "Added/expanded deployment and hosting documentation plus new frontend configuration/utilities unrelated to the admin button + invitation modal fix.",
+      "reason": "Not requested by the BuildRequest and outside the stated scope.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/DEPLOYMENT.md; frontend/src/config.ts; frontend/src/utils/assetPaths.ts; frontend/src/utils/usStates.ts; frontend/src/utils/fileValidation.ts; frontend/src/components/SignaturePad.tsx)"
+      ]
+    },
+    {
+      "description": "Introduced automatic bootstrap admin behavior for a designated principal.",
+      "reason": "Not requested; could be considered a new admin-related capability beyond making the existing entry point visible and showing the invitation modal.",
+      "evidence": [
+        "frontend/src/App.tsx (imports/uses useAdminBootstrap)",
+        "frontend-file-summaries.txt (App.tsx: 'automatic admin bootstrap for designated principal')",
+        "backend/main.mo (truncated; shows BOOTSTRAP_ADMIN_PRINCIPAL and bootstrapAdminAssigned variables)"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
     "frontend/src/App.tsx",
-    "frontend/src/components/PrincipalIdFooterBlock.tsx",
+    "frontend/src/components/admin/AdminInvitationModal.tsx",
+    "frontend/src/hooks/useAdmin.ts",
+    "frontend/src/hooks/useAdminInvitation.ts",
     "project_state.json"
   ]
 }

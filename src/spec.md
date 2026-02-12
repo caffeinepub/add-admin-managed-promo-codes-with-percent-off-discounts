@@ -1,11 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Temporarily show the authenticated user’s Internet Identity Principal ID at the bottom of the Home page, with a one-click copy control.
+**Goal:** Make admin detection reliable so the “Admin Panel” top-bar button only shows for admins, and ensure the admin invitation accept/decline modal automatically appears right after login for invited principals.
 
 **Planned changes:**
-- Add a small, clearly isolated UI block/component on the Home route that conditionally renders only when the user is authenticated and displays `identity.getPrincipal().toText()` labeled as “Principal ID:”.
-- Place the Principal ID block at the very bottom of the Home page (in or directly above the global footer) with responsive styling so it doesn’t overlap content.
-- Add a copy-to-clipboard control next to the Principal ID, with English success feedback (e.g., “Copied”) and error feedback (e.g., “Copy failed”).
+- Backend: expose a public admin-check method that matches what the frontend calls (`actor.isCallerAdmin()`), returning `true` for admins and `false` (no trap) for non-admins.
+- Frontend: fix header navigation so “Admin Panel” renders in the top nav (and mobile menu) only for admins, and clicking it navigates directly to `#/admin`.
+- Frontend: trigger the “Admin Access Invitation” modal automatically after login when a pending invitation exists, including re-checking after initial user initialization so timing doesn’t suppress the modal.
+- Backend + frontend: on invitation accept/decline, clear the invitation server-side and update the current session UI immediately (show admin button after accept) without requiring a page refresh.
 
-**User-visible outcome:** When logged in on the Home page, the user can see their Principal ID at the bottom and copy it with one click; when logged out (or on other pages) nothing is shown.
+**User-visible outcome:** Admin users see an “Admin Panel” button in the header that takes them straight to the admin route, and invited users are automatically prompted to accept/decline admin access immediately after logging in; accepting updates the UI right away.

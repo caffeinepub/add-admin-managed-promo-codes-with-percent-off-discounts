@@ -1,61 +1,79 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T03:48:17.799Z",
+  "generatedAt": "2026-02-12T04:36:34.912Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
+    "total": 4,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "On the main/home page only, when the user is authenticated via Internet Identity, display the current user's Principal ID at the very bottom of the page (footer area).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx",
-          "frontend/src/App.tsx"
-        ]
+        "summary": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add a one-click copy-to-clipboard control next to the displayed Principal ID on the Home page, with user-facing feedback text in English indicating success or failure.",
+        "summary": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx"
+          "frontend/src/hooks/useAdmin.ts",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx"
+          "frontend/src/hooks/useAdmin.ts",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Implement the Principal ID display as an easily removable, clearly isolated UI block (e.g., a small component or guarded block) so it can be deleted in a follow-up update without impacting other footer features.",
+        "summary": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/hooks/useAdminInvitation.ts",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/PrincipalIdFooterBlock.tsx",
+          "frontend/src/hooks/useAdminInvitation.ts",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useAdminInvitation.ts",
+          "frontend/src/components/admin/AdminInvitationModal.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useAdminInvitation.ts",
+          "frontend/src/components/admin/AdminInvitationModal.tsx",
           "frontend/src/App.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/components/PrincipalIdFooterBlock.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/admin/AdminInvitationModal.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useAdmin.ts",
+    "frontend/src/hooks/useAdminInvitation.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -11,23 +11,31 @@ export function useCheckAdminAccess() {
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
       try {
+        // Try isCallerAdmin first (preferred method)
         return await actor.isCallerAdmin();
       } catch (error: any) {
-        // Handle backend trap errors gracefully
+        // If isCallerAdmin fails with authorization error, try isAdmin as fallback
         if (error?.message?.includes('Unauthorized') || error?.message?.includes('trap')) {
-          return false;
+          try {
+            return await actor.isAdmin();
+          } catch (fallbackError: any) {
+            // If both fail with authorization, user is not admin
+            if (fallbackError?.message?.includes('Unauthorized') || fallbackError?.message?.includes('trap')) {
+              return false;
+            }
+            throw fallbackError;
+          }
         }
         throw error;
       }
     },
     enabled: !!actor && !actorFetching && !!identity && !isInitializing,
-    retry: 1,
+    retry: 2, // Retry twice to handle timing issues
+    retryDelay: 500, // Wait 500ms between retries
     staleTime: 0, // Always refetch when invalidated
   });
 
   // Return loading state that properly reflects all dependencies
-  // isLoading should be true while actor is fetching, II is initializing, or query is loading
-  // isFetched should only be true after a successful check has been performed
   return {
     isAdmin: query.data === true,
     isLoading: actorFetching || isInitializing || query.isLoading,

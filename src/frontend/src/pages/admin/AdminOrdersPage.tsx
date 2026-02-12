@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useGetAllOrders } from '../../hooks/useOrders';
+import { useGetAllOrders, useDeleteOrder } from '../../hooks/useOrders';
 import { useCheckAdminAccess } from '../../hooks/useAdmin';
 import AdminAccessGate from '../../components/admin/AdminAccessGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, Search, Filter } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, Package, Search, Filter, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { PaymentContactStatus, Order } from '../../backend';
 
 interface AdminOrdersPageProps {
@@ -18,147 +29,175 @@ interface AdminOrdersPageProps {
 
 function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
   const { isAdmin } = useCheckAdminAccess();
-  const { data: orders, isLoading: ordersLoading } = useGetAllOrders(isAdmin);
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'shipped'>('all');
-  const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentContactStatus>('all');
+  const { data: orders = [], isLoading } = useGetAllOrders(isAdmin);
+  const deleteMutation = useDeleteOrder();
 
-  // Filter and search orders
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [deleteOrderId, setDeleteOrderId] = useState<bigint | null>(null);
+
   const filteredOrders = useMemo(() => {
-    if (!orders) return [];
+    return orders.filter((order) => {
+      const matchesSearch =
+        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.id.toString().includes(searchTerm);
 
-    let filtered = [...orders];
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
+      const matchesPayment =
+        paymentFilter === 'all' || order.paymentContactStatus === paymentFilter;
 
-    // Apply payment filter
-    if (paymentFilter !== 'all') {
-      filtered = filtered.filter(order => order.paymentContactStatus === paymentFilter);
-    }
+      return matchesSearch && matchesStatus && matchesPayment;
+    });
+  }, [orders, searchTerm, statusFilter, paymentFilter]);
 
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(order =>
-        order.customerName.toLowerCase().includes(query) ||
-        order.email.toLowerCase().includes(query) ||
-        order.id.toString().includes(query)
-      );
-    }
-
-    // Sort by creation time (newest first)
-    filtered.sort((a, b) => Number(b.createdTime - a.createdTime));
-
-    return filtered;
-  }, [orders, statusFilter, paymentFilter, searchQuery]);
-
-  // Calculate statistics
   const stats = useMemo(() => {
-    if (!orders) return { total: 0, pending: 0, shipped: 0 };
     return {
       total: orders.length,
-      pending: orders.filter(o => o.status === 'pending').length,
-      shipped: orders.filter(o => o.status === 'shipped').length,
+      pending: orders.filter((o) => o.status === 'pending').length,
+      shipped: orders.filter((o) => o.status === 'shipped').length,
+      notContacted: orders.filter((o) => o.paymentContactStatus === 'notContacted').length,
+      contacted: orders.filter((o) => o.paymentContactStatus === 'contacted').length,
+      paymentReceived: orders.filter((o) => o.paymentContactStatus === 'paymentReceived').length,
     };
   }, [orders]);
 
-  const getPaymentStatusLabel = (status: PaymentContactStatus): string => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'notContacted':
-        return 'Not Contacted';
-      case 'contacted':
-        return 'Contacted';
-      case 'paymentReceived':
-        return 'Payment Received';
+      case 'pending':
+        return <Badge variant="outline">Pending</Badge>;
+      case 'shipped':
+        return <Badge>Shipped</Badge>;
       default:
-        return 'Unknown';
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const getPaymentStatusVariant = (status: PaymentContactStatus): 'default' | 'secondary' | 'outline' => {
+  const getPaymentStatusBadge = (status: PaymentContactStatus) => {
     switch (status) {
       case 'notContacted':
-        return 'outline';
+        return <Badge variant="destructive">Not Contacted</Badge>;
       case 'contacted':
-        return 'default';
+        return <Badge variant="outline">Contacted</Badge>;
       case 'paymentReceived':
-        return 'secondary';
+        return <Badge>Payment Received</Badge>;
       default:
-        return 'outline';
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  if (ordersLoading) {
+  const formatDate = (timestamp: bigint) => {
+    const date = new Date(Number(timestamp) / 1_000_000);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const handleDeleteClick = (orderId: bigint) => {
+    setDeleteOrderId(orderId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteOrderId) return;
+
+    try {
+      await deleteMutation.mutateAsync(deleteOrderId);
+      toast.success('Order deleted successfully');
+      setDeleteOrderId(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to delete order');
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="container py-12 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
-  const hasOrders = orders && orders.length > 0;
-  const hasFilteredResults = filteredOrders.length > 0;
-  const isFiltering = searchQuery.trim() !== '' || statusFilter !== 'all' || paymentFilter !== 'all';
-
   return (
-    <div className="container py-8 md:py-12 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Manage and track all customer orders</p>
+    <div className="container py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
+          <p className="text-muted-foreground">Manage all customer orders</p>
+        </div>
+        <Package className="h-8 w-8 text-primary" />
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+      {/* Statistics */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <CardDescription>Total Orders</CardDescription>
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Pending Orders</CardDescription>
-            <CardTitle className="text-3xl text-orange-600 dark:text-orange-400">{stats.pending}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Pending</CardDescription>
+            <CardTitle className="text-3xl">{stats.pending}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Shipped Orders</CardDescription>
-            <CardTitle className="text-3xl text-green-600 dark:text-green-400">{stats.shipped}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardDescription>Shipped</CardDescription>
+            <CardTitle className="text-3xl">{stats.shipped}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Not Contacted</CardDescription>
+            <CardTitle className="text-3xl">{stats.notContacted}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Contacted</CardDescription>
+            <CardTitle className="text-3xl">{stats.contacted}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Paid</CardDescription>
+            <CardTitle className="text-3xl">{stats.paymentReceived}</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <Card className="mb-6">
+      {/* Filters */}
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filters & Search
+            Filters
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Name, email, or order ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+              <Label htmlFor="search">
+                <Search className="h-4 w-4 inline mr-2" />
+                Search
+              </Label>
+              <Input
+                id="search"
+                placeholder="Name, email, or order ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="status-filter">Order Status</Label>
-              <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status-filter">
                   <SelectValue />
                 </SelectTrigger>
@@ -171,7 +210,7 @@ function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="payment-filter">Payment Status</Label>
-              <Select value={paymentFilter} onValueChange={(value: any) => setPaymentFilter(value)}>
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
                 <SelectTrigger id="payment-filter">
                   <SelectValue />
                 </SelectTrigger>
@@ -184,83 +223,66 @@ function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
               </Select>
             </div>
           </div>
-          {isFiltering && (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredOrders.length} of {orders?.length || 0} orders
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('all');
-                  setPaymentFilter('all');
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
       {/* Orders Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Orders
-          </CardTitle>
+          <CardTitle>Orders ({filteredOrders.length})</CardTitle>
           <CardDescription>
-            {hasFilteredResults
-              ? `${filteredOrders.length} order${filteredOrders.length === 1 ? '' : 's'} found`
-              : hasOrders
-              ? 'No orders match your filters'
-              : 'No orders yet'}
+            {filteredOrders.length === orders.length
+              ? 'Showing all orders'
+              : `Showing ${filteredOrders.length} of ${orders.length} orders`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {hasFilteredResults ? (
-            <div className="rounded-md border overflow-x-auto">
+          {filteredOrders.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {orders.length === 0 ? 'No orders yet' : 'No orders match your filters'}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Payment</TableHead>
-                    <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => (
                     <TableRow key={order.id.toString()}>
-                      <TableCell className="font-medium">#{order.id.toString()}</TableCell>
-                      <TableCell>{order.customerName}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{order.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={order.status === 'shipped' ? 'secondary' : 'default'}>
-                          {order.status === 'shipped' ? 'Shipped' : 'Pending'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getPaymentStatusVariant(order.paymentContactStatus)}>
-                          {getPaymentStatusLabel(order.paymentContactStatus)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(Number(order.createdTime) / 1_000_000).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="font-mono text-sm">#{order.id.toString()}</TableCell>
+                      <TableCell className="font-medium">{order.customerName}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{order.email}</TableCell>
+                      <TableCell className="text-sm">{formatDate(order.createdTime)}</TableCell>
+                      <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell>{getPaymentStatusBadge(order.paymentContactStatus)}</TableCell>
+                      <TableCell className="text-right space-x-2">
                         <Button
-                          variant="ghost"
                           size="sm"
+                          variant="outline"
                           onClick={() => onOrderClick(order.id.toString())}
                         >
                           View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteClick(order.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending && deleteOrderId === order.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -268,30 +290,39 @@ function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
                 </TableBody>
               </Table>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                {hasOrders ? 'No orders match your current filters.' : 'No orders have been placed yet.'}
-              </p>
-              {isFiltering && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setStatusFilter('all');
-                    setPaymentFilter('all');
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              )}
-            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteOrderId} onOpenChange={(open) => !open && setDeleteOrderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete order #{deleteOrderId?.toString()}? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Order'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
