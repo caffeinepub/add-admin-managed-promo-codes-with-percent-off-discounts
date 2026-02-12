@@ -13,13 +13,15 @@ import MyOrdersPage from './pages/MyOrdersPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminOrderDetailsPage from './pages/admin/AdminOrderDetailsPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 import LoginButton from './components/LoginButton';
 import AdminInvitationModal from './components/admin/AdminInvitationModal';
 import { useCheckAdminAccess } from './hooks/useAdmin';
 import { Menu, X, User, Shield } from 'lucide-react';
 import { getAssetUrl, getDocumentUrl } from './utils/assetPaths';
 
-type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details';
+type Route = 'home' | 'order' | 'prices' | 'order-confirmation' | 'my-orders' | 'profile' | 'admin' | 'admin-order-details' | 'admin-login' | 'admin-users';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState<Route>('home');
@@ -66,8 +68,12 @@ function App() {
       } else if (hash.startsWith('/admin/orders/')) {
         setCurrentRoute('admin-order-details');
         setOrderId(hash.split('/')[3] || '');
+      } else if (hash === '/admin/users') {
+        setCurrentRoute('admin-users');
       } else if (hash === '/admin') {
         setCurrentRoute('admin');
+      } else if (hash === '/admin-login') {
+        setCurrentRoute('admin-login');
       } else if (hash === '/order') {
         setCurrentRoute('order');
       } else if (hash === '/prices') {
@@ -86,7 +92,7 @@ function App() {
   useEffect(() => {
     if (!isCheckingProfile && mustSetupProfile) {
       // Only redirect if trying to access protected routes
-      const protectedRoutes: Route[] = ['order', 'my-orders', 'admin', 'admin-order-details'];
+      const protectedRoutes: Route[] = ['order', 'my-orders', 'admin', 'admin-order-details', 'admin-users'];
       if (protectedRoutes.includes(currentRoute)) {
         window.location.hash = '/profile';
       }
@@ -103,13 +109,6 @@ function App() {
   };
 
   const isAuthenticated = !!identity;
-  
-  // Show admin link ONLY when:
-  // 1. User is authenticated AND
-  // 2. Admin check has completed (isFetched) AND
-  // 3. User is confirmed admin
-  // This prevents the flash for non-admin users
-  const showAdminLink = isAuthenticated && adminCheckFetched && isAdmin;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -177,15 +176,13 @@ function App() {
                 </button>
               </>
             )}
-            {showAdminLink && (
-              <button
-                onClick={() => navigate('/admin')}
-                className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-2"
-              >
-                <Shield className="h-4 w-4" />
-                Admin Panel
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/admin-login')}
+              className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              Admin Panel
+            </button>
             <LoginButton onLogout={handleLogout} />
           </nav>
 
@@ -239,15 +236,13 @@ function App() {
                   </button>
                 </>
               )}
-              {showAdminLink && (
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md flex items-center gap-2"
-                >
-                  <Shield className="h-4 w-4" />
-                  Admin Panel
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/admin-login')}
+                className="text-sm font-medium transition-colors hover:text-primary text-left py-2 touch-manipulation bg-primary/10 px-3 rounded-md flex items-center gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Admin Panel
+              </button>
               <div className="pt-2 border-t border-border/40">
                 <LoginButton onLogout={handleLogout} />
               </div>
@@ -264,7 +259,9 @@ function App() {
         {currentRoute === 'order-confirmation' && <OrderConfirmationPage orderId={orderId} />}
         {currentRoute === 'my-orders' && <MyOrdersPage />}
         {currentRoute === 'profile' && <ProfilePage />}
+        {currentRoute === 'admin-login' && <AdminLoginPage />}
         {currentRoute === 'admin' && <AdminOrdersPage onOrderClick={(id) => navigate(`/admin/orders/${id}`)} />}
+        {currentRoute === 'admin-users' && <AdminUsersPage />}
         {currentRoute === 'admin-order-details' && (
           <AdminOrderDetailsPage orderId={orderId} onBack={() => navigate('/admin')} />
         )}

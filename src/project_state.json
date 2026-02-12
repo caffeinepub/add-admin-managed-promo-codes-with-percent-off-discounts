@@ -1,35 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Implement admin access UI: a top-bar Admin button shown only to admins that opens the admin panel, plus an accept/decline admin invitation popup that auto-appears on login for invited principals.",
+  "summary": "Implement admin panel access changes: remove admin-only role restrictions so any account using the admin login can access the admin dashboard, and persist admin-panel login session to avoid re-login.",
   "architectural_notes": [
-    "Role-based UI gating: show Admin nav button only when user has admin role/flag",
-    "On login, check for pending admin invitations for the current principal and trigger invitation modal automatically"
+    "Admin panel authentication should not enforce role/permission checks; access is granted based on successful login via the admin login screen.",
+    "Admin panel login state should be persisted (e.g., session/token stored) to keep users logged in across page reloads."
   ],
   "known_issues": [
-    "Admin panel link/button and admin invitation accept/decline popup are not currently appearing as expected"
+    "Admin login currently fails with: \"Unauthorized: Only admins can assign user roles\" even with correct credentials."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-frontend-header-so-the-admin-panel-button-appears-in-the-top-navigation-as-shown-in-the-uploaded-screenshot-when-the-logged-in-principal-is-an-admin-and-clicking-it-navigates-directly-to-the-admin-panel-route",
-      "title": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-make-the-admin-invitation-accept-decline-modal-appear-automatically-immediately-after-login-whenever-the-logged-in-principal-has-a-pending-admin-invitation-and-ensure-it-is-not-suppressed-by-initial-authorization-role-check-timing",
-      "title": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
+      "id": "feature-update-frontend-admin-access-gating-so-admin-dashboard-pages-no-longer-depend-on-iscalleradmin-isadmin-role-checks-admin-pages-must-be-accessible-after-a-successful-admin-credential-login-username-password-while-still-requiring-internet-identity-authentication-as-currently-enforced-on-the-admin-login-page",
+      "title": "Update frontend admin access gating so admin dashboard pages no longer depend on isCallerAdmin/isAdmin role checks. Admin pages must be accessible after a successful admin credential login (username/password), while still requiring Internet Identity authentication (as currently enforced on the Admin Login page).",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-accepting-an-admin-invitation-grants-admin-access-and-immediately-updates-the-ui-so-the-admin-panel-button-becomes-visible-without-requiring-a-page-refresh",
-      "title": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+      "id": "feature-persist-admin-panel-login-session-on-the-frontend-so-that-after-a-successful-admin-credential-login-the-user-remains-admin-panel-logged-in-across-page-refreshes-and-revisits-and-does-not-need-to-re-enter-admin-credentials-until-they-explicitly-log-out-or-their-internet-identity-session-is-cleared",
+      "title": "Persist admin-panel login session on the frontend so that after a successful admin credential login, the user remains \"admin-panel logged in\" across page refreshes and revisits, and does not need to re-enter admin credentials until they explicitly log out (or their Internet Identity session is cleared).",
       "reqIds": [
         "REQ-4"
       ],
@@ -39,27 +31,34 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add an Admin button to the top navigation bar that is only visible to admin users and opens the admin panel directly when clicked",
+      "summary": "Remove admin-only role checks so any user who logs in via the admin login can access the admin dashboard",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Show an accept/decline admin invitation popup automatically upon login when the logged-in principal has a pending admin invitation",
+      "summary": "Persist admin-panel login session so users stay logged in and don’t need to log in again",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+      "summary": "Fix backend adminLogin so it no longer attempts to assign the #admin role (which currently traps with \"Unauthorized: Only admins can assign user roles\"). Instead, adminLogin must only validate the provided username/password and, on success, record the caller in the existing adminLoginStatus map and return true; on failure, return false.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Remove admin-only role restrictions for admin-panel operations in the backend so that any authenticated, non-banned user (i.e., #user) can perform the operations needed by the admin dashboard (view all orders, edit/update/delete orders, update payment contact status, add/update tracking number, view banned users, and ban/unban users). Preserve banned-user protections and preserve user-role checks where applicable.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Fix admin top-bar button visibility and auto admin-invitation accept/decline popup on login",
+  "projectName": "Remove admin-only restrictions for admin panel and persist admin-panel login",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

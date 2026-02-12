@@ -1,102 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Fix admin top-bar button visibility and auto admin-invitation accept/decline popup on login",
+  "title": "Remove admin-only restrictions for admin panel and persist admin-panel login",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+      "text": "Fix backend adminLogin so it no longer attempts to assign the #admin role (which currently traps with \"Unauthorized: Only admins can assign user roles\"). Instead, adminLogin must only validate the provided username/password and, on success, record the caller in the existing adminLoginStatus map and return true; on failure, return false.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-7",
-          "msg-9"
+          "msg-1"
         ],
         "quotes": [
-          "Ok admin panel IS still not popping up",
-          "yea a button at the top by all these only sown if there a admin (and accept invitation pop up)",
-          "open panel directly"
+          "this is the error Unauthorized: Only admins can assign user roles and yes its the right login",
+          "remove admin‑only restrictions entirely yes"
         ]
       },
       "acceptanceCriteria": [
-        "Backend canister provides a publicly callable method that matches what the frontend calls (currently `actor.isCallerAdmin()` in `frontend/src/hooks/useAdmin.ts`).",
-        "Calling the admin-check method as a non-admin returns `false` (and does not trap) so the frontend can distinguish non-admin from errors.",
-        "Calling the admin-check method as an admin returns `true`."
+        "Calling adminLogin with the correct credentials returns true and does not trap with any Unauthorized error.",
+        "Calling adminLogin with incorrect credentials returns false.",
+        "The backend still compiles and existing non-admin flows (profile, ordering) are unaffected."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
-      "target": "frontend",
+      "text": "Remove admin-only role restrictions for admin-panel operations in the backend so that any authenticated, non-banned user (i.e., #user) can perform the operations needed by the admin dashboard (view all orders, edit/update/delete orders, update payment contact status, add/update tracking number, view banned users, and ban/unban users). Preserve banned-user protections and preserve user-role checks where applicable.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-7",
-          "msg-9"
+          "msg-1"
         ],
         "quotes": [
-          "up here where the other buttons are in photo,",
-          "open panel directly"
+          "remove admin‑only restrictions entirely yes",
+          "Anyone with login should be able to login to admin panel and when you do the panel page should come up"
         ]
       },
       "acceptanceCriteria": [
-        "When logged out, no admin button/link is shown.",
-        "When logged in as a non-admin, no admin button/link is shown.",
-        "When logged in as an admin, “Admin Panel” is visible in the desktop header navigation and in the mobile menu, and clicking it navigates to `#/admin`."
+        "A non-admin principal with the #user role can successfully call getAllOrders, updateOrderStatus, updatePaymentContactStatus, updateOrder, deleteOrder, addOrUpdateTrackingNumber, getBannedUsers, isBannedUser, banUser, and unbanUser without receiving an \"Only admins\" error.",
+        "If the caller is banned, backend methods that currently block banned users continue to trap with \"Unauthorized: User is banned\" (or equivalent existing banned-user behavior).",
+        "Normal users can still only view their own orders via getOrder/getMyOrders unless the requirement explicitly changes that behavior for admin-panel use."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
+      "text": "Update frontend admin access gating so admin dashboard pages no longer depend on isCallerAdmin/isAdmin role checks. Admin pages must be accessible after a successful admin credential login (username/password), while still requiring Internet Identity authentication (as currently enforced on the Admin Login page).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-7",
-          "msg-9"
+          "msg-1"
         ],
         "quotes": [
-          "nor is the popup to accept or decline the admin invitation to the principle ID i sent",
-          "(and accept invitation pop up)",
-          "as soon as a user logs in with an invited principa"
+          "remove admin‑only restrictions entirely yes",
+          "Anyone with login should be able to login to admin panel and when you do the panel page should come up"
         ]
       },
       "acceptanceCriteria": [
-        "When a principal with a pending invitation logs in, the “Admin Access Invitation” modal opens automatically without requiring any user click.",
-        "If the invitation status initially fails due to role/authorization timing, the app automatically re-checks and still shows the modal once the user is fully initialized (no manual refresh required).",
-        "If there is no pending invitation, the modal does not appear."
+        "After logging in with Internet Identity and then submitting valid admin credentials, navigating to #/admin (and other admin routes such as #/admin/users) displays the admin pages without showing an \"Access Denied\" admin-only gate.",
+        "If the user is not authenticated with Internet Identity, the admin login flow still shows the existing LoginRequiredScreen behavior."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
-      "target": "both",
+      "text": "Persist admin-panel login session on the frontend so that after a successful admin credential login, the user remains \"admin-panel logged in\" across page refreshes and revisits, and does not need to re-enter admin credentials until they explicitly log out (or their Internet Identity session is cleared).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-9"
+          "msg-1"
         ],
         "quotes": [
-          "nor is the popup to accept or decline the admin invitation to the principle ID i sent",
-          "as soon as a user logs in with an invited principa"
+          "so if a account has admin login it will save there admin panel login so theyt dont have to login again"
         ]
       },
       "acceptanceCriteria": [
-        "After clicking “Accept & Become Admin”, the backend assigns the admin role to the caller and clears the invitation.",
-        "After acceptance completes, the invitation modal closes and the top-bar “Admin Panel” button appears during the same session without a manual reload.",
-        "After clicking “Decline”, the backend clears the invitation and the modal closes; the user does not become admin."
+        "After a successful admin credential login, refreshing the page preserves admin-panel access and does not prompt for admin credentials again.",
+        "Logging out (Internet Identity logout via the existing LoginButton) clears the persisted admin-panel login state so the user must re-enter admin credentials next time.",
+        "The persisted state does not store the raw admin password in localStorage/sessionStorage (store only a boolean/session marker)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
-    "Do not edit any files under `frontend/src/components/ui` or any other paths listed in `frontend.immutablePaths`. Compose existing UI components instead.",
-    "Only add `backend/migration.mo` changes if state schema upgrades are required; otherwise keep migration as-is."
+    "Backend must remain a single Motoko actor with all logic in backend/main.mo.",
+    "Do not edit files under frontend/src/components/ui or any paths listed in frontend immutablePaths (compose them instead).",
+    "Use English for all user-facing UI text."
   ],
   "nonGoals": [
-    "Adding new admin features beyond making the existing admin UI entry point visible and the invitation modal appear (e.g., new admin pages, new order capabilities).",
-    "Implementing third-party authentication or any non-Internet-Identity auth.",
-    "Changing the app’s overall visual theme/layout beyond what’s necessary to correctly show the Admin Panel button in the existing header."
+    "Implementing third-party authentication or any auth provider other than Internet Identity.",
+    "Adding new database infrastructure or external storage services.",
+    "Changing the visual design of the admin pages beyond what is necessary to remove/replace admin-only gating."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,61 +1,72 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T04:36:34.912Z",
+  "generatedAt": "2026-02-12T05:28:21.866Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 4,
-    "implemented": 3,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably and the top-bar “Admin Panel” button renders only for admins.",
+        "summary": "Fix backend adminLogin so it no longer attempts to assign the #admin role (which currently traps with \"Unauthorized: Only admins can assign user roles\"). Instead, adminLogin must only validate the provided username/password and, on success, record the caller in the existing adminLoginStatus map and return true; on failure, return false.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the frontend header so the Admin Panel button appears in the top navigation (as shown in the uploaded screenshot) when the logged-in principal is an admin, and clicking it navigates directly to the admin panel route.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useAdmin.ts",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useAdmin.ts",
-          "frontend/src/App.tsx"
-        ]
+        "summary": "Remove admin-only role restrictions for admin-panel operations in the backend so that any authenticated, non-banned user (i.e., #user) can perform the operations needed by the admin dashboard (view all orders, edit/update/delete orders, update payment contact status, add/update tracking number, view banned users, and ban/unban users). Preserve banned-user protections and preserve user-role checks where applicable.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Make the admin invitation accept/decline modal appear automatically immediately after login whenever the logged-in principal has a pending admin invitation, and ensure it is not suppressed by initial authorization/role-check timing.",
+        "summary": "Update frontend admin access gating so admin dashboard pages no longer depend on isCallerAdmin/isAdmin role checks. Admin pages must be accessible after a successful admin credential login (username/password), while still requiring Internet Identity authentication (as currently enforced on the Admin Login page).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useAdminInvitation.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/admin/AdminAccessGate.tsx",
+          "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "frontend/src/pages/admin/AdminUsersPage.tsx",
+          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+          "frontend/src/hooks/useOrders.ts",
+          "frontend/src/hooks/useUserBans.ts",
+          "frontend/src/hooks/useAdmin.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useAdminInvitation.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/components/admin/AdminAccessGate.tsx",
+          "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "frontend/src/pages/admin/AdminUsersPage.tsx",
+          "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+          "frontend/src/hooks/useOrders.ts",
+          "frontend/src/hooks/useUserBans.ts",
+          "frontend/src/hooks/useAdmin.ts"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Ensure accepting an admin invitation grants admin access and immediately updates the UI so the Admin Panel button becomes visible without requiring a page refresh.",
+        "summary": "Persist admin-panel login session on the frontend so that after a successful admin credential login, the user remains \"admin-panel logged in\" across page refreshes and revisits, and does not need to re-enter admin credentials until they explicitly log out (or their Internet Identity session is cleared).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useAdminInvitation.ts",
-          "frontend/src/components/admin/AdminInvitationModal.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/utils/adminPanelSession.ts",
+          "frontend/src/hooks/useAdminPanelSession.ts",
+          "frontend/src/hooks/useAdminLogin.ts",
+          "frontend/src/pages/admin/AdminLoginPage.tsx",
+          "frontend/src/components/LoginButton.tsx",
+          "frontend/src/components/admin/AdminAccessGate.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useAdminInvitation.ts",
-          "frontend/src/components/admin/AdminInvitationModal.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/utils/adminPanelSession.ts",
+          "frontend/src/hooks/useAdminPanelSession.ts",
+          "frontend/src/hooks/useAdminLogin.ts",
+          "frontend/src/pages/admin/AdminLoginPage.tsx",
+          "frontend/src/components/LoginButton.tsx",
+          "frontend/src/components/admin/AdminAccessGate.tsx"
         ]
       }
     ]
@@ -66,14 +77,20 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/admin/AdminInvitationModal.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/components/BannedUserGate.tsx",
+    "frontend/src/components/LoginButton.tsx",
+    "frontend/src/components/admin/AdminAccessGate.tsx",
     "frontend/src/hooks/useAdmin.ts",
-    "frontend/src/hooks/useAdminInvitation.ts",
+    "frontend/src/hooks/useAdminLogin.ts",
+    "frontend/src/hooks/useAdminPanelSession.ts",
+    "frontend/src/hooks/useOrders.ts",
+    "frontend/src/hooks/useUserBans.ts",
+    "frontend/src/pages/OrderPage.tsx",
+    "frontend/src/pages/admin/AdminLoginPage.tsx",
+    "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+    "frontend/src/pages/admin/AdminOrdersPage.tsx",
+    "frontend/src/pages/admin/AdminUsersPage.tsx",
+    "frontend/src/utils/adminPanelSession.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

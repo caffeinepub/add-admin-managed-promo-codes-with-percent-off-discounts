@@ -1,283 +1,218 @@
 import { useState } from 'react';
+import { useGetMyOrders } from '../hooks/useOrders';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetMyOrders, useGetOrder } from '../hooks/useOrders';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, Package, Eye } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Package, ArrowLeft, Calendar, MapPin, User, Phone, Mail, CreditCard, FileText } from 'lucide-react';
+import LoginRequiredScreen from '../components/LoginRequiredScreen';
+import BannedUserGate from '../components/BannedUserGate';
+import type { Order } from '../backend';
 import { formatOrderDate, formatOrderStatus, formatPaymentContactStatus } from '../utils/orderFormatting';
 
-export default function MyOrdersPage() {
-  const { identity } = useInternetIdentity();
-  const { data: orders, isLoading } = useGetMyOrders();
-  const [selectedOrderId, setSelectedOrderId] = useState<bigint | null>(null);
-  const { data: selectedOrder } = useGetOrder(selectedOrderId);
-
+function MyOrdersContent() {
+  const { identity, isInitializing } = useInternetIdentity();
   const isAuthenticated = !!identity;
+  const { data: orders = [], isLoading } = useGetMyOrders();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // Show login prompt if not authenticated
-  if (!isAuthenticated) {
+  // Show loading state while checking authentication
+  if (isInitializing) {
     return (
-      <div className="container py-12 max-w-2xl">
-        <Card className="border-2">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-primary/10 p-4">
-                <Package className="h-12 w-12 text-primary" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl">My Orders</CardTitle>
-            <CardDescription className="text-base">
-              Please log in to view your orders
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-6">
-              You need to be logged in to access your order history and track your orders.
-            </p>
-            <Button onClick={() => window.location.hash = '#/'} size="lg">
-              Go to Home Page
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Show order details view
-  if (selectedOrderId && selectedOrder) {
-    return (
-      <div className="container py-8 md:py-12 max-w-4xl">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedOrderId(null)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to My Orders
-          </Button>
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
-
-        <Card className="border-2 shadow-lg">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl md:text-3xl">Order #{selectedOrder.id.toString()}</CardTitle>
-                <CardDescription className="text-base mt-2">
-                  Placed on {formatOrderDate(selectedOrder.createdTime)}
-                </CardDescription>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Badge variant={selectedOrder.status === 'shipped' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
-                  {formatOrderStatus(selectedOrder.status)}
-                </Badge>
-                <Badge
-                  variant={
-                    selectedOrder.paymentContactStatus === 'paymentReceived'
-                      ? 'default'
-                      : selectedOrder.paymentContactStatus === 'contacted'
-                      ? 'secondary'
-                      : 'outline'
-                  }
-                  className="text-sm px-3 py-1"
-                >
-                  {formatPaymentContactStatus(selectedOrder.paymentContactStatus)}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Customer Information */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Customer Information
-              </h3>
-              <div className="bg-muted/30 rounded-lg p-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Name:</span>
-                  <span>{selectedOrder.customerName}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Email:</span>
-                  <span>{selectedOrder.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Phone:</span>
-                  <span>{selectedOrder.phone}</span>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Shipping Address */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Shipping Address
-              </h3>
-              <div className="bg-muted/30 rounded-lg p-4 text-sm">
-                <p>{selectedOrder.shippingAddress.street}</p>
-                <p>
-                  {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state}{' '}
-                  {selectedOrder.shippingAddress.zip}
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Order Status */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Order Status
-              </h3>
-              <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Order Status:</span>
-                  <Badge variant={selectedOrder.status === 'shipped' ? 'default' : 'secondary'}>
-                    {formatOrderStatus(selectedOrder.status)}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Payment Status:</span>
-                  <Badge
-                    variant={
-                      selectedOrder.paymentContactStatus === 'paymentReceived'
-                        ? 'default'
-                        : selectedOrder.paymentContactStatus === 'contacted'
-                        ? 'secondary'
-                        : 'outline'
-                    }
-                  >
-                    {formatPaymentContactStatus(selectedOrder.paymentContactStatus)}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Information */}
-            {selectedOrder.paymentContactStatus === 'notContacted' && (
-              <>
-                <Separator />
-                <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    Payment Information
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    We will contact you via Snapchat to arrange payment once your order has been reviewed.
-                  </p>
-                  <div className="bg-background rounded p-3 space-y-1">
-                    <p className="text-sm font-medium">Contact us on Snapchat:</p>
-                    <p className="text-base font-mono text-primary">travis_c1</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Contact Snapchat: travis_c1 to receive Venmo payment details
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
-  // Show orders list
+  // Show login required screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginRequiredScreen />;
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline">Pending</Badge>;
+      case 'shipped':
+        return <Badge>Shipped</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container py-8 md:py-12 max-w-6xl">
+    <div className="container py-8 md:py-12 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">My Orders</h1>
-        <p className="text-muted-foreground">View and track all your orders</p>
+        <p className="text-lg text-muted-foreground">
+          View and track all your ID card orders
+        </p>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <p className="mt-4 text-muted-foreground">Loading your orders...</p>
-        </div>
-      ) : !orders || orders.length === 0 ? (
-        <Card className="border-2">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-muted p-4">
-                <Package className="h-12 w-12 text-muted-foreground" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl">No Orders Yet</CardTitle>
-            <CardDescription className="text-base">
-              You haven't placed any orders yet
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button onClick={() => (window.location.hash = '#/order')} size="lg">
-              Place Your First Order
+      {orders.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
+            <p className="text-muted-foreground mb-6">
+              You haven't placed any orders. Start by creating your first ID card order.
+            </p>
+            <Button onClick={() => (window.location.hash = '/order')}>
+              Place an Order
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-4">
           {orders.map((order) => (
-            <Card
-              key={order.id.toString()}
-              className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
-              onClick={() => setSelectedOrderId(order.id)}
-            >
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Package className="h-5 w-5 text-primary" />
-                      <h3 className="text-xl font-semibold">Order #{order.id.toString()}</h3>
-                    </div>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Placed on {formatOrderDate(order.createdTime)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>
-                          {order.shippingAddress.city}, {order.shippingAddress.state}
-                        </span>
-                      </div>
-                    </div>
+            <Card key={order.id.toString()} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-xl">Order #{order.id.toString()}</CardTitle>
+                    <CardDescription>
+                      Placed on {formatOrderDate(order.createdTime)}
+                    </CardDescription>
                   </div>
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    <Badge variant={order.status === 'shipped' ? 'default' : 'secondary'} className="text-sm px-3 py-1 w-fit">
-                      {formatOrderStatus(order.status)}
-                    </Badge>
-                    <Badge
-                      variant={
-                        order.paymentContactStatus === 'paymentReceived'
-                          ? 'default'
-                          : order.paymentContactStatus === 'contacted'
-                          ? 'secondary'
-                          : 'outline'
-                      }
-                      className="text-sm px-3 py-1 w-fit"
-                    >
-                      {formatPaymentContactStatus(order.paymentContactStatus)}
-                    </Badge>
-                    <Button variant="ghost" size="sm" className="gap-2 w-fit">
-                      <FileText className="h-4 w-4" />
-                      View Details
-                    </Button>
+                  {getStatusBadge(order.status)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Customer Name</p>
+                    <p className="font-medium">{order.customerName}</p>
                   </div>
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <p className="font-medium">{order.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Shipping Address</p>
+                    <p className="font-medium">
+                      {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
+                      {order.shippingAddress.state} {order.shippingAddress.zip}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Payment Status</p>
+                    <p className="font-medium">{formatPaymentContactStatus(order.paymentContactStatus)}</p>
+                  </div>
+                  {order.trackingNumber && (
+                    <div className="sm:col-span-2">
+                      <p className="text-muted-foreground">Tracking Number</p>
+                      <p className="font-medium font-mono">{order.trackingNumber}</p>
+                    </div>
+                  )}
+                </div>
+                <Separator />
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Order Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Order #{selectedOrder.id.toString()}</DialogTitle>
+                <DialogDescription>
+                  Placed on {formatOrderDate(selectedOrder.createdTime)}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-2">Order Status</h3>
+                  {getStatusBadge(selectedOrder.status)}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2">Contact Information</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">Name:</span> {selectedOrder.customerName}</p>
+                    <p><span className="text-muted-foreground">Email:</span> {selectedOrder.email}</p>
+                    <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.phone}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Address</h3>
+                  <p className="text-sm">
+                    {selectedOrder.shippingAddress.street}<br />
+                    {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zip}
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="font-semibold mb-2">ID Information</h3>
+                  <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                    <p><span className="text-muted-foreground">Height:</span> {selectedOrder.idInfo.height}</p>
+                    <p><span className="text-muted-foreground">Weight:</span> {selectedOrder.idInfo.weight}</p>
+                    <p><span className="text-muted-foreground">Hair Color:</span> {selectedOrder.idInfo.hairColor}</p>
+                    <p><span className="text-muted-foreground">Eye Color:</span> {selectedOrder.idInfo.eyeColor}</p>
+                    <p><span className="text-muted-foreground">Date of Birth:</span> {selectedOrder.idInfo.dateOfBirth}</p>
+                    <p><span className="text-muted-foreground">Sex:</span> {selectedOrder.idInfo.sex}</p>
+                  </div>
+                </div>
+
+                {selectedOrder.trackingNumber && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-2">Tracking Information</h3>
+                      <p className="text-sm font-mono">{selectedOrder.trackingNumber}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+export default function MyOrdersPage() {
+  return (
+    <BannedUserGate>
+      <MyOrdersContent />
+    </BannedUserGate>
   );
 }

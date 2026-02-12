@@ -1,73 +1,96 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix admin nav visibility and ensure admin invitation modal reliably auto-opens after login",
+  "title": "Remove admin-role gating and persist admin-panel credential session",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Show the “Admin Panel” button in the header only for authenticated admins and navigate directly to #/admin when clicked.",
+      "id": "REQ-3",
+      "summary": "Remove isCallerAdmin/isAdmin role-based gating from admin routes and instead gate admin pages by successful admin-credential login (while still requiring Internet Identity authentication).",
       "acceptanceCriteria": [
-        "When logged out, no admin button/link is shown.",
-        "When logged in as a non-admin, no admin button/link is shown.",
-        "When logged in as an admin, “Admin Panel” is visible in the desktop header navigation and in the mobile menu, and clicking it navigates to `#/admin`."
+        "After logging in with Internet Identity and then submitting valid admin credentials, navigating to #/admin (and other admin routes such as #/admin/users) displays the admin pages without showing an \"Access Denied\" admin-only gate.",
+        "If the user is not authenticated with Internet Identity, the admin login flow still shows the existing LoginRequiredScreen behavior."
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Remove dependency on useCheckAdminAccess/isCallerAdmin-related state for routing/gating; ensure admin routes rely on the admin-panel session gate (and not role checks). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminAccessGate.tsx",
+          "operation": "modify",
+          "description": "Replace role-based admin checks (useCheckAdminAccess / Access Denied UI) with an admin-panel session gate: require Internet Identity authentication, then require a persisted admin-panel login marker; if not present, redirect/navigate to the Admin Login route and/or show a login-required message for the admin panel (without using isCallerAdmin). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminOrdersPage.tsx",
+          "operation": "modify",
+          "description": "Remove useCheckAdminAccess/isAdmin-dependent query enabling and load admin dashboard data based on authenticated actor + admin-panel session gate only (AdminAccessGate). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminUsersPage.tsx",
+          "operation": "modify",
+          "description": "Remove useCheckAdminAccess/isAdmin-dependent query enabling and load user-management data based on authenticated actor + admin-panel session gate only (AdminAccessGate). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+          "operation": "modify",
+          "description": "Ensure order-details admin page relies on the admin-panel session gate (AdminAccessGate) and does not depend on any isCallerAdmin/isAdmin checks to render. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useOrders.ts",
+          "operation": "modify",
+          "description": "Update admin-dashboard order query hooks to no longer require an isAdmin boolean for enabling; instead, allow enabling based on authenticated actor and admin-panel session state (provided by a new hook), without calling isCallerAdmin. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useUserBans.ts",
+          "operation": "modify",
+          "description": "Ensure banned-users related queries/mutations used by the admin panel are enabled/used based on authenticated actor + admin-panel session state (not isCallerAdmin/isAdmin). Verify the component's usage instructions before implementing."
+        },
         {
           "path": "frontend/src/hooks/useAdmin.ts",
           "operation": "modify",
-          "description": "Harden admin detection by using the backend role-check capability exposed by the authorization system: attempt `actor.isCallerAdmin()` and fall back to `actor.isAdmin()` if needed, while ensuring non-admin callers resolve to `false` without breaking rendering. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Ensure the header’s “Admin Panel” button is rendered based on the updated `useCheckAdminAccess()` result and navigates to `#/admin` in both desktop navigation and the mobile menu (no change to overall layout beyond visibility). Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Automatically open the admin invitation accept/decline modal immediately after login when there is a pending admin invitation, with automatic re-checks to avoid timing suppression.",
-      "acceptanceCriteria": [
-        "When a principal with a pending invitation logs in, the “Admin Access Invitation” modal opens automatically without requiring any user click.",
-        "If the invitation status initially fails due to role/authorization timing, the app automatically re-checks and still shows the modal once the user is fully initialized (no manual refresh required).",
-        "If there is no pending invitation, the modal does not appear."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useAdminInvitation.ts",
-          "operation": "modify",
-          "description": "Adjust invitation checking to be resilient to early-login authorization timing (authorization component): treat transient authorization/trap failures as retryable rather than as a definitive `false`, and configure React Query retries/delays so a pending invitation is eventually detected once the caller is fully initialized. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Update the modal auto-open logic to avoid being gated by an early, transient ‘false’ invitation result; ensure the modal opens as soon as the invitation query resolves true after login without requiring navigation or refresh. Verify the component's usage instructions before implementing."
+          "description": "Deprecate or neutralize role-check-based admin access hook usage for admin-page gating so the admin panel no longer depends on isCallerAdmin/isAdmin checks; keep any remaining usage from other parts of the app intact. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "After accepting an admin invitation, update cached role state so the Admin Panel button becomes visible immediately (same session) without refresh; declining clears the invitation and closes the modal.",
+      "summary": "Persist admin-panel credential-login state on the frontend across refreshes; clear the persisted marker on Internet Identity logout; do not store raw passwords.",
       "acceptanceCriteria": [
-        "After clicking “Accept & Become Admin”, the backend assigns the admin role to the caller and clears the invitation.",
-        "After acceptance completes, the invitation modal closes and the top-bar “Admin Panel” button appears during the same session without a manual reload.",
-        "After clicking “Decline”, the backend clears the invitation and the modal closes; the user does not become admin."
+        "After a successful admin credential login, refreshing the page preserves admin-panel access and does not prompt for admin credentials again.",
+        "Logging out (Internet Identity logout via the existing LoginButton) clears the persisted admin-panel login state so the user must re-enter admin credentials next time.",
+        "The persisted state does not store the raw admin password in localStorage/sessionStorage (store only a boolean/session marker)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useAdminInvitation.ts",
-          "operation": "modify",
-          "description": "Ensure the accept/decline mutations invalidate and refetch all role-related queries needed for immediate UI updates (admin status + invitation status), aligned with the authorization component’s role-check behavior, so the header reacts without reload. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/utils/adminPanelSession.ts",
+          "operation": "create",
+          "description": "Add a small utility to set/get/clear a persisted admin-panel session marker in localStorage keyed to the current principal (store only a boolean/session marker; never store the password). Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/admin/AdminInvitationModal.tsx",
-          "operation": "modify",
-          "description": "After a successful accept/decline action, ensure the modal closes reliably and does not reopen from stale state while role/invitation queries refetch; keep existing UI components composed (do not edit ui library files). Verify the component's usage instructions before implementing."
+          "path": "frontend/src/hooks/useAdminPanelSession.ts",
+          "operation": "create",
+          "description": "Create a hook that exposes admin-panel session state (e.g., isAdminPanelLoggedIn, setLoggedIn, clearLoggedIn) derived from the current Internet Identity principal and persisted storage; update reactively when identity changes. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/hooks/useAdminLogin.ts",
           "operation": "modify",
-          "description": "Confirm the header’s “Admin Panel” visibility reacts to the post-accept refetch of admin status during the same session (no refresh), including in the mobile menu. Verify the component's usage instructions before implementing."
+          "description": "On successful backend adminLogin(username,password), set the persisted admin-panel session marker (no password storage) and navigate to /admin; remove role-check refresh flows that rely on invalidating/refetching isAdmin. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/admin/AdminLoginPage.tsx",
+          "operation": "modify",
+          "description": "After successful admin credential login, rely on the persisted admin-panel session marker for subsequent access; optionally adjust UX to reflect already-logged-in admin-panel state when revisiting this page. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/LoginButton.tsx",
+          "operation": "modify",
+          "description": "When performing Internet Identity logout, clear the persisted admin-panel session marker (and any related cached session state) so admin credentials are required next time. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminAccessGate.tsx",
+          "operation": "modify",
+          "description": "Integrate the new persisted admin-panel session hook so admin routes remain accessible across refreshes after a successful credential login; if identity is cleared, require admin credentials again (no role checks). Verify the component's usage instructions before implementing."
         }
       ]
     }

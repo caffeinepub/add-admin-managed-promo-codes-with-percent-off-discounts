@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make admin detection reliable so the “Admin Panel” top-bar button only shows for admins, and ensure the admin invitation accept/decline modal automatically appears right after login for invited principals.
+**Goal:** Allow any authenticated (non-banned) user to access and use the admin panel after credential login, remove admin-only backend restrictions blocking admin-panel operations, and persist admin-panel login across refreshes.
 
 **Planned changes:**
-- Backend: expose a public admin-check method that matches what the frontend calls (`actor.isCallerAdmin()`), returning `true` for admins and `false` (no trap) for non-admins.
-- Frontend: fix header navigation so “Admin Panel” renders in the top nav (and mobile menu) only for admins, and clicking it navigates directly to `#/admin`.
-- Frontend: trigger the “Admin Access Invitation” modal automatically after login when a pending invitation exists, including re-checking after initial user initialization so timing doesn’t suppress the modal.
-- Backend + frontend: on invitation accept/decline, clear the invitation server-side and update the current session UI immediately (show admin button after accept) without requiring a page refresh.
+- Backend: Update `adminLogin` to only validate username/password, set `adminLoginStatus` on success, return `true/false`, and stop attempting to assign the `#admin` role (eliminating the current Unauthorized trap).
+- Backend: Remove admin-only role restrictions for admin-panel methods so any authenticated `#user` can perform admin-dashboard operations (orders management, payment contact updates, tracking number updates, banned-user views, ban/unban), while preserving existing banned-user protections and keeping normal users limited to their own orders outside the explicitly listed admin-panel methods.
+- Frontend: Remove admin role-based gating (`isCallerAdmin`/role checks) from admin routes/pages and rely on successful admin credential login (with existing Internet Identity authentication still required).
+- Frontend: Persist “admin-panel logged in” state across refreshes/revisits using a safe session marker (no raw password storage) and clear it on Internet Identity logout.
 
-**User-visible outcome:** Admin users see an “Admin Panel” button in the header that takes them straight to the admin route, and invited users are automatically prompted to accept/decline admin access immediately after logging in; accepting updates the UI right away.
+**User-visible outcome:** After logging in with Internet Identity and entering valid admin credentials once, users can open admin routes (e.g., `#/admin`, `#/admin/users`) without “Access Denied,” can use the admin dashboard features if they are not banned, and stay logged into the admin panel across page refreshes until they log out.

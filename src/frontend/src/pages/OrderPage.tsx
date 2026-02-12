@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSubmitOrder } from '../hooks/useOrders';
+import { useCreateOrder } from '../hooks/useOrders';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { getAssetUrl } from '../utils/assetPaths';
 import { US_STATES } from '../utils/usStates';
 import { validateImageFile, fileToBytes } from '../utils/fileValidation';
 import SignaturePad from '../components/SignaturePad';
 import { ExternalBlob } from '../backend';
 import { generateFullName, generateAddress } from '../utils/idGenerators';
 import LoginRequiredScreen from '../components/LoginRequiredScreen';
+import BannedUserGate from '../components/BannedUserGate';
+import { formatErrorMessage } from '../utils/errorFormatting';
 
 interface OrderPageProps {
   onOrderSubmitted: (orderId: string) => void;
@@ -44,7 +45,7 @@ interface FieldError {
   signature?: string;
 }
 
-export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
+function OrderPageContent({ onOrderSubmitted }: OrderPageProps) {
   const { identity, isInitializing } = useInternetIdentity();
   const isAuthenticated = !!identity;
 
@@ -82,7 +83,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
   const [generalError, setGeneralError] = useState('');
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const submitOrderMutation = useSubmitOrder();
+  const createOrderMutation = useCreateOrder();
 
   // Show loading state while checking authentication
   if (isInitializing) {
@@ -313,7 +314,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
       const signatureBytes = new Uint8Array(signatureArrayBuffer);
       const signatureBlob = ExternalBlob.fromBytes(signatureBytes);
 
-      const orderId = await submitOrderMutation.mutateAsync({
+      const orderId = await createOrderMutation.mutateAsync({
         customerName: formData.customerName,
         email: formData.email,
         phone: formData.phone,
@@ -324,19 +325,12 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
           zip: formData.zip,
         },
         idInfo: {
-          name: idInfo.name,
           height: idInfo.height,
           hairColor: idInfo.hairColor,
           eyeColor: idInfo.eyeColor,
           weight: idInfo.weight,
           dateOfBirth: idInfo.dateOfBirth,
           sex: idInfo.sex,
-          address: {
-            street: idInfo.street,
-            city: idInfo.city,
-            state: idInfo.state,
-            zip: idInfo.zip,
-          },
           photo: photoBlob,
           signature: signatureBlob,
         },
@@ -345,7 +339,8 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
       onOrderSubmitted(orderId.toString());
     } catch (error: any) {
       console.error('Order submission error:', error);
-      setGeneralError(error.message || 'Failed to submit order. Please try again.');
+      const errorMessage = formatErrorMessage(error);
+      setGeneralError(errorMessage || 'Failed to submit order. Please try again.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -516,19 +511,23 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
             <CardTitle>ID Information</CardTitle>
             <CardDescription>Information that will appear on your ID card</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+          <CardContent className="space-y-6">
+            {/* Name with Generate Toggle */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="idName">Name on ID *</Label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center space-x-2">
                   <Checkbox
                     id="generateName"
                     checked={generateName}
                     onCheckedChange={handleGenerateNameToggle}
                   />
-                  <Label htmlFor="generateName" className="text-sm font-normal cursor-pointer">
+                  <label
+                    htmlFor="generateName"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
                     Generate random name
-                  </Label>
+                  </label>
                 </div>
               </div>
               <Input
@@ -536,7 +535,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
                 value={idInfo.name}
                 onChange={(e) => setIdInfo({ ...idInfo, name: e.target.value })}
                 onBlur={() => handleBlur('idName')}
-                placeholder="John Doe"
+                placeholder="John Michael Doe"
                 disabled={generateName}
                 className={fieldErrors.idName && touched.idName ? 'border-destructive' : ''}
               />
@@ -545,6 +544,9 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
               )}
             </div>
 
+            <Separator />
+
+            {/* Personal Details */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="idDateOfBirth">Date of Birth *</Label>
@@ -580,6 +582,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
                   <SelectContent>
                     <SelectItem value="M">Male</SelectItem>
                     <SelectItem value="F">Female</SelectItem>
+                    <SelectItem value="X">Non-binary</SelectItem>
                   </SelectContent>
                 </Select>
                 {fieldErrors.idSex && touched.idSex && (
@@ -649,18 +652,22 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
 
             <Separator />
 
+            {/* ID Address with Generate Toggle */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Address on ID</Label>
-                <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold">Address on ID *</Label>
+                <div className="flex items-center space-x-2">
                   <Checkbox
                     id="generateIdAddress"
                     checked={generateIdAddress}
                     onCheckedChange={handleGenerateIdAddressToggle}
                   />
-                  <Label htmlFor="generateIdAddress" className="text-sm font-normal cursor-pointer">
+                  <label
+                    htmlFor="generateIdAddress"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
                     Generate random address
-                  </Label>
+                  </label>
                 </div>
               </div>
 
@@ -671,7 +678,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
                   value={idInfo.street}
                   onChange={(e) => setIdInfo({ ...idInfo, street: e.target.value })}
                   onBlur={() => handleBlur('idStreet')}
-                  placeholder="123 Main St"
+                  placeholder="456 Oak Avenue"
                   disabled={generateIdAddress}
                   className={fieldErrors.idStreet && touched.idStreet ? 'border-destructive' : ''}
                 />
@@ -688,7 +695,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
                     value={idInfo.city}
                     onChange={(e) => setIdInfo({ ...idInfo, city: e.target.value })}
                     onBlur={() => handleBlur('idCity')}
-                    placeholder="New York"
+                    placeholder="Los Angeles"
                     disabled={generateIdAddress}
                     className={fieldErrors.idCity && touched.idCity ? 'border-destructive' : ''}
                   />
@@ -734,7 +741,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
                     value={idInfo.zip}
                     onChange={(e) => setIdInfo({ ...idInfo, zip: e.target.value })}
                     onBlur={() => handleBlur('idZip')}
-                    placeholder="10001"
+                    placeholder="90001"
                     disabled={generateIdAddress}
                     className={fieldErrors.idZip && touched.idZip ? 'border-destructive' : ''}
                   />
@@ -750,34 +757,36 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
         {/* Photo Upload */}
         <Card>
           <CardHeader>
-            <CardTitle>Photo *</CardTitle>
-            <CardDescription>Upload a clear photo for your ID card</CardDescription>
+            <CardTitle>ID Photo *</CardTitle>
+            <CardDescription>
+              Upload a clear photo for your ID card (JPG, PNG, or WebP, max 5MB)
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="photo">Upload Photo</Label>
               <Input
                 id="photo"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handlePhotoChange}
                 className={fieldErrors.photo ? 'border-destructive' : ''}
               />
               {fieldErrors.photo && (
                 <p className="text-sm text-destructive">{fieldErrors.photo}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Accepted formats: JPG, PNG, GIF. Maximum size: 5MB
-              </p>
             </div>
 
             {photoPreview && (
               <div className="mt-4">
-                <Label className="mb-2 block">Preview:</Label>
-                <img
-                  src={photoPreview}
-                  alt="Photo preview"
-                  className="max-w-xs rounded-lg border-2 border-border"
-                />
+                <Label className="mb-2 block">Preview</Label>
+                <div className="relative w-48 h-48 border rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={photoPreview}
+                    alt="Photo preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
             )}
           </CardContent>
@@ -787,9 +796,11 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
         <Card>
           <CardHeader>
             <CardTitle>Signature *</CardTitle>
-            <CardDescription>Draw your signature below</CardDescription>
+            <CardDescription>
+              Draw your signature below using your mouse or touchscreen
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <SignaturePad
               onSignatureChange={(data) => {
                 setSignatureData(data);
@@ -799,7 +810,7 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
               }}
             />
             {fieldErrors.signature && (
-              <p className="text-sm text-destructive mt-2">{fieldErrors.signature}</p>
+              <p className="text-sm text-destructive">{fieldErrors.signature}</p>
             )}
           </CardContent>
         </Card>
@@ -809,17 +820,17 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
           <Button
             type="submit"
             size="lg"
-            disabled={submitOrderMutation.isPending}
+            disabled={createOrderMutation.isPending}
             className="min-w-[200px]"
           >
-            {submitOrderMutation.isPending ? (
+            {createOrderMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Submitting Order...
               </>
             ) : (
               <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
+                <CheckCircle2 className="mr-2 h-5 w-5" />
                 Submit Order
               </>
             )}
@@ -827,5 +838,13 @@ export default function OrderPage({ onOrderSubmitted }: OrderPageProps) {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function OrderPage(props: OrderPageProps) {
+  return (
+    <BannedUserGate>
+      <OrderPageContent {...props} />
+    </BannedUserGate>
   );
 }

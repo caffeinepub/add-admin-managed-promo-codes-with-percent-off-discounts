@@ -34,6 +34,7 @@ export interface Order {
     id: bigint;
     customerName: string;
     status: OrderStatus;
+    trackingNumber?: string;
     owner: Principal;
     paymentContactStatus: PaymentContactStatus;
     createdTime: bigint;
@@ -64,23 +65,28 @@ export enum UserRole {
 }
 export interface backendInterface {
     acceptAdminInvitation(): Promise<void>;
+    addOrUpdateTrackingNumber(orderId: bigint, trackingNumber: string): Promise<void>;
+    adminLogin(username: string, password: string): Promise<boolean>;
     assignAdminRoleToCaller(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    banUser(target: Principal): Promise<void>;
     checkAdminInvitation(): Promise<boolean>;
     createOrder(customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation): Promise<bigint>;
     declineAdminInvitation(): Promise<void>;
     deleteOrder(orderId: bigint): Promise<void>;
     getAllOrders(): Promise<Array<Order>>;
+    getBannedUsers(): Promise<Array<Principal>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMyOrders(): Promise<Array<Order>>;
     getOrder(orderId: bigint): Promise<Order | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
-    isAdmin(): Promise<boolean>;
+    isBannedUser(target: Principal): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendAdminInvitation(user: Principal): Promise<void>;
     sendAdminInvitationByEmail(email: string): Promise<void>;
+    unbanUser(target: Principal): Promise<void>;
     updateOrder(orderId: bigint, customerName: string, email: string, phone: string, shippingAddress: ShippingAddress, idInfo: IDInformation, status: OrderStatus, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;
     updateOrderStatus(orderId: bigint, status: OrderStatus): Promise<void>;
     updatePaymentContactStatus(orderId: bigint, paymentContactStatus: PaymentContactStatus, contactNotes: string): Promise<void>;

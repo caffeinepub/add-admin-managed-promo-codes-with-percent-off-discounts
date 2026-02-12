@@ -163,30 +163,30 @@ function AdminOrderDetailsContent({ orderId, onBack }: AdminOrderDetailsPageProp
           <>
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
                   Customer Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
+                  <Label className="text-muted-foreground">Name</Label>
                   <p className="font-medium">{order.customerName}</p>
                 </div>
                 <Separator />
                 <div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Label className="text-muted-foreground flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     Email
-                  </p>
+                  </Label>
                   <p className="font-medium">{order.email}</p>
                 </div>
                 <Separator />
                 <div>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Label className="text-muted-foreground flex items-center gap-2">
                     <Phone className="h-4 w-4" />
                     Phone
-                  </p>
+                  </Label>
                   <p className="font-medium">{order.phone}</p>
                 </div>
               </CardContent>
@@ -194,8 +194,8 @@ function AdminOrderDetailsContent({ orderId, onBack }: AdminOrderDetailsPageProp
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
                   Shipping Address
                 </CardTitle>
               </CardHeader>
@@ -213,119 +213,112 @@ function AdminOrderDetailsContent({ orderId, onBack }: AdminOrderDetailsPageProp
         )}
 
         {/* Order Status */}
-        {!isEditMode && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                Order Status
-              </CardTitle>
-              <CardDescription>Update the current order status</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="order-status">Status</Label>
-                <Select
-                  value={order.status}
-                  onValueChange={handleStatusChange}
-                  disabled={updateStatusMutation.isPending}
-                >
-                  <SelectTrigger id="order-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={OrderStatus.pending}>Pending</SelectItem>
-                    <SelectItem value={OrderStatus.shipped}>Shipped</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="pt-2">
-                <p className="text-sm text-muted-foreground">Current Status:</p>
-                <div className="mt-2">
-                  {order.status === OrderStatus.pending ? (
-                    <Badge variant="outline">Pending</Badge>
-                  ) : (
-                    <Badge>Shipped</Badge>
-                  )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="order-status">Status</Label>
+              <Select
+                value={order.status}
+                onValueChange={handleStatusChange}
+                disabled={updateStatusMutation.isPending}
+              >
+                <SelectTrigger id="order-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {order.trackingNumber && (
+              <>
+                <Separator />
+                <div>
+                  <Label className="text-muted-foreground">Tracking Number</Label>
+                  <p className="font-mono text-sm">{order.trackingNumber}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Contact Status */}
+        <PaymentContactControls
+          currentStatus={order.paymentContactStatus}
+          currentNotes={order.contactNotes}
+          onUpdate={handlePaymentUpdate}
+          isUpdating={updateOrderMutation.isPending}
+        />
 
         {/* ID Information */}
-        {!isEditMode && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                ID Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Height</p>
-                  <p className="font-medium">{order.idInfo.height}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Weight</p>
-                  <p className="font-medium">{order.idInfo.weight}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Hair Color</p>
-                  <p className="font-medium">{order.idInfo.hairColor}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Eye Color</p>
-                  <p className="font-medium">{order.idInfo.eyeColor}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date of Birth</p>
-                  <p className="font-medium">{order.idInfo.dateOfBirth}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Sex</p>
-                  <p className="font-medium">{order.idInfo.sex}</p>
-                </div>
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              ID Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <Label className="text-muted-foreground">Height</Label>
+                <p className="font-medium">{order.idInfo.height}</p>
               </div>
+              <div>
+                <Label className="text-muted-foreground">Weight</Label>
+                <p className="font-medium">{order.idInfo.weight}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Hair Color</Label>
+                <p className="font-medium">{order.idInfo.hairColor}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Eye Color</Label>
+                <p className="font-medium">{order.idInfo.eyeColor}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Date of Birth</Label>
+                <p className="font-medium">{order.idInfo.dateOfBirth}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Sex</Label>
+                <p className="font-medium">{order.idInfo.sex}</p>
+              </div>
+            </div>
 
-              {order.idInfo.photo && (
-                <div className="pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">ID Photo</p>
-                  <img
-                    src={order.idInfo.photo.getDirectURL()}
-                    alt="ID Photo"
-                    className="w-full max-w-xs rounded-lg border"
-                  />
+            {(order.idInfo.photo || order.idInfo.signature) && (
+              <>
+                <Separator className="my-6" />
+                <div className="grid gap-6 md:grid-cols-2">
+                  {order.idInfo.photo && (
+                    <div>
+                      <Label className="text-muted-foreground mb-2 block">Photo</Label>
+                      <img
+                        src={order.idInfo.photo.getDirectURL()}
+                        alt="ID Photo"
+                        className="w-full max-w-xs rounded-lg border"
+                      />
+                    </div>
+                  )}
+                  {order.idInfo.signature && (
+                    <div>
+                      <Label className="text-muted-foreground mb-2 block">Signature</Label>
+                      <img
+                        src={order.idInfo.signature.getDirectURL()}
+                        alt="Signature"
+                        className="w-full max-w-xs rounded-lg border bg-white"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {order.idInfo.signature && (
-                <div className="pt-4">
-                  <p className="text-sm text-muted-foreground mb-2">Signature</p>
-                  <img
-                    src={order.idInfo.signature.getDirectURL()}
-                    alt="Signature"
-                    className="w-full max-w-xs rounded-lg border bg-white"
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Payment & Contact Status */}
-        {!isEditMode && (
-          <div className="md:col-span-2">
-            <PaymentContactControls
-              currentStatus={order.paymentContactStatus}
-              currentNotes={order.contactNotes}
-              onUpdate={handlePaymentUpdate}
-              isUpdating={updateOrderMutation.isPending}
-            />
-          </div>
-        )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

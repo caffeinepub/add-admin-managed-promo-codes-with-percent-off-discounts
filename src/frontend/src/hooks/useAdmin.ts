@@ -2,6 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 
+/**
+ * This hook is deprecated for admin panel access gating.
+ * Admin panel access is now controlled by admin-panel session state.
+ * This hook remains for backward compatibility with other parts of the app
+ * that may still use role-based checks (e.g., ban/unban operations).
+ */
 export function useCheckAdminAccess() {
   const { actor, isFetching: actorFetching } = useActor();
   const { identity, isInitializing } = useInternetIdentity();
@@ -11,20 +17,12 @@ export function useCheckAdminAccess() {
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Try isCallerAdmin first (preferred method)
+        // Call isCallerAdmin method
         return await actor.isCallerAdmin();
       } catch (error: any) {
-        // If isCallerAdmin fails with authorization error, try isAdmin as fallback
+        // If fails with authorization error, user is not admin
         if (error?.message?.includes('Unauthorized') || error?.message?.includes('trap')) {
-          try {
-            return await actor.isAdmin();
-          } catch (fallbackError: any) {
-            // If both fail with authorization, user is not admin
-            if (fallbackError?.message?.includes('Unauthorized') || fallbackError?.message?.includes('trap')) {
-              return false;
-            }
-            throw fallbackError;
-          }
+          return false;
         }
         throw error;
       }

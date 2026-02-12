@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useGetAllOrders, useDeleteOrder } from '../../hooks/useOrders';
-import { useCheckAdminAccess } from '../../hooks/useAdmin';
 import AdminAccessGate from '../../components/admin/AdminAccessGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,17 +18,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Package, Search, Filter, Trash2 } from 'lucide-react';
+import { Loader2, Package, Search, Filter, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import type { PaymentContactStatus, Order } from '../../backend';
+import type { PaymentContactStatus } from '../../backend';
 
 interface AdminOrdersPageProps {
   onOrderClick: (orderId: string) => void;
 }
 
 function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
-  const { isAdmin } = useCheckAdminAccess();
-  const { data: orders = [], isLoading } = useGetAllOrders(isAdmin);
+  const { data: orders = [], isLoading } = useGetAllOrders();
   const deleteMutation = useDeleteOrder();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -128,9 +126,20 @@ function AdminOrdersContent({ onOrderClick }: AdminOrdersPageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-          <p className="text-muted-foreground">Manage all customer orders</p>
+          <p className="text-muted-foreground">Manage all customer orders and users</p>
         </div>
         <Package className="h-8 w-8 text-primary" />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-4">
+        <Button
+          variant="outline"
+          onClick={() => (window.location.hash = '/admin/users')}
+        >
+          <Users className="mr-2 h-4 w-4" />
+          Manage Users
+        </Button>
       </div>
 
       {/* Statistics */}

@@ -1,64 +1,46 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T04:36:34.909Z",
-  "summary": "Frontend changes appear to implement admin gating (via useCheckAdminAccess), an auto-opening admin invitation modal on login (with retry logic for timing), and UI cache invalidation after accepting an invitation. However, the diff summary does not provide evidence that the backend now exposes the required `isCallerAdmin()` method (or that accept/decline invitation backend behavior is implemented), and several unrelated UI/content/theme and admin-management additions appear beyond scope.",
+  "generatedAt": "2026-02-12T05:28:21.864Z",
+  "summary": "REQ-1, REQ-3, and REQ-4 appear implemented via a backend adminLogin change (no role assignment) and a new frontend persisted “admin panel session” gate keyed by principal that is cleared on Internet Identity logout. REQ-2 (removing admin-only restrictions for specific backend admin-panel operations) cannot be confirmed from the provided backend diff excerpt, which does not show the relevant methods.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Ensure the backend exposes an admin-check method used by the frontend so that admin users can be detected reliably (frontend calls `actor.isCallerAdmin()`), returning false for non-admins without trapping.",
-      "reason": "The frontend hook calls `actor.isCallerAdmin()` (with fallback to `actor.isAdmin()`), but the backend diff snippet shown does not include any `public/shared` method definition for `isCallerAdmin` (or demonstrate its non-trapping false behavior for non-admins). With the backend file truncated, there is insufficient evidence the required method exists and matches what the frontend calls.",
+      "id": "REQ-2",
+      "requirement": "Remove admin-only role restrictions for admin-panel operations in the backend so any authenticated, non-banned #user can call getAllOrders, updateOrderStatus, updatePaymentContactStatus, updateOrder, deleteOrder, addOrUpdateTrackingNumber, getBannedUsers, isBannedUser, banUser, and unbanUser without \"Only admins\" errors (while preserving banned-user protections).",
+      "reason": "The backend diff snippet only shows adminLogin and some profile-related functions; it does not include the listed admin-dashboard methods or their authorization logic, so there is no evidence they were updated to remove admin-only checks.",
       "evidence": [
-        "frontend/src/hooks/useAdmin.ts",
-        "backend/main.mo (truncated; no visible isCallerAdmin implementation in shown excerpt)"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Backend accepting/declining an admin invitation must (accept) grant admin and clear invitation, and (decline) clear invitation; UI updates in-session without refresh.",
-      "reason": "Frontend invalidation/refetch logic exists to update admin UI after acceptance, but the diff summary does not show backend implementations for `acceptAdminInvitation()` / `declineAdminInvitation()` that actually assign admin role and clear invitations. Backend file is truncated and contains only data structures in the visible excerpt.",
-      "evidence": [
-        "frontend/src/hooks/useAdminInvitation.ts",
-        "backend/main.mo (truncated; no visible acceptAdminInvitation/declineAdminInvitation implementation in shown excerpt)"
+        "backend/main.mo (truncated; admin-panel methods not shown)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Removed/changed legal notice, attestation checkbox, and disclaimer wording in order-related pages.",
-      "reason": "Not requested by the BuildRequest; non-goals include avoiding broader layout/theme/content changes beyond making the Admin button visible and the invitation modal appear.",
+      "description": "Added/modified banned-user UI gating (BannedUserGate) and wrapped order flow with it.",
+      "reason": "BuildRequest focuses on admin-panel gating changes and persistence; it does not request new/changed banned-user frontend gating or order-page wrapping changes.",
       "evidence": [
-        "frontend-file-summaries.txt (OrderPage.tsx: removed legal notice/attestation; OrderConfirmationPage.tsx: removed novelty/legal disclaimer wording)"
+        "frontend/src/components/BannedUserGate.tsx",
+        "frontend/src/pages/OrderPage.tsx (truncated)"
       ]
     },
     {
-      "description": "Expanded/altered admin order management features (e.g., filtering/search/statistics, delete confirmation, edit modes, added order update/delete hooks).",
-      "reason": "Explicit non-goal: adding new admin features beyond making the existing admin UI entry point visible and the invitation modal appear.",
+      "description": "Introduced a utility to clear all admin panel sessions from localStorage.",
+      "reason": "REQ-4 only requires persisting a session marker and clearing it on logout/II session cleared; a bulk clear-all helper is not requested.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/pages/admin/AdminOrdersPage.tsx; frontend/src/pages/admin/AdminOrderDetailsPage.tsx; frontend/src/hooks/useOrders.ts)"
+        "frontend/src/utils/adminPanelSession.ts"
       ]
     },
     {
-      "description": "Significant global styling/theme and Tailwind token changes (OKLCH color system, typography scale, new theme tokens).",
-      "reason": "Non-goal: changing the app’s overall visual theme/layout beyond what’s necessary to correctly show the Admin Panel button in the existing header.",
+      "description": "Routing/navigation and other app-level changes including “persistent Admin Panel button in navigation for all users”, automatic user role bootstrap, automatic admin bootstrap, and an admin invitation modal.",
+      "reason": "Not requested; requirements only cover removing admin-only restrictions for admin panel access and persisting admin-panel login.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/src/index.css; frontend/tailwind.config.js)"
+        "frontend-file-summaries.txt (App.tsx summary)"
       ]
     },
     {
-      "description": "Added/expanded deployment and hosting documentation plus new frontend configuration/utilities unrelated to the admin button + invitation modal fix.",
-      "reason": "Not requested by the BuildRequest and outside the stated scope.",
+      "description": "Large unrelated UI/content/styling and documentation/config additions (global styles, Tailwind config changes, deployment guide, asset path utilities, centralized config, removal of disclaimers/wording on multiple pages).",
+      "reason": "These changes go beyond the requested admin gating and session persistence and are not mentioned in the BuildRequest constraints/goals.",
       "evidence": [
-        "frontend-file-summaries.txt (frontend/DEPLOYMENT.md; frontend/src/config.ts; frontend/src/utils/assetPaths.ts; frontend/src/utils/usStates.ts; frontend/src/utils/fileValidation.ts; frontend/src/components/SignaturePad.tsx)"
-      ]
-    },
-    {
-      "description": "Introduced automatic bootstrap admin behavior for a designated principal.",
-      "reason": "Not requested; could be considered a new admin-related capability beyond making the existing entry point visible and showing the invitation modal.",
-      "evidence": [
-        "frontend/src/App.tsx (imports/uses useAdminBootstrap)",
-        "frontend-file-summaries.txt (App.tsx: 'automatic admin bootstrap for designated principal')",
-        "backend/main.mo (truncated; shows BOOTSTRAP_ADMIN_PRINCIPAL and bootstrapAdminAssigned variables)"
+        "frontend-file-summaries.txt (index.css, tailwind.config.js, DEPLOYMENT.md, utils/assetPaths.ts, config.ts, OrderConfirmationPage/HomePage/PricesPage summaries)"
       ]
     }
   ],
@@ -66,10 +48,20 @@
   "changed_files": [
     "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/admin/AdminInvitationModal.tsx",
+    "frontend/src/components/BannedUserGate.tsx",
+    "frontend/src/components/LoginButton.tsx",
+    "frontend/src/components/admin/AdminAccessGate.tsx",
     "frontend/src/hooks/useAdmin.ts",
-    "frontend/src/hooks/useAdminInvitation.ts",
+    "frontend/src/hooks/useAdminLogin.ts",
+    "frontend/src/hooks/useAdminPanelSession.ts",
+    "frontend/src/hooks/useOrders.ts",
+    "frontend/src/hooks/useUserBans.ts",
+    "frontend/src/pages/OrderPage.tsx",
+    "frontend/src/pages/admin/AdminLoginPage.tsx",
+    "frontend/src/pages/admin/AdminOrderDetailsPage.tsx",
+    "frontend/src/pages/admin/AdminOrdersPage.tsx",
+    "frontend/src/pages/admin/AdminUsersPage.tsx",
+    "frontend/src/utils/adminPanelSession.ts",
     "project_state.json"
   ]
 }

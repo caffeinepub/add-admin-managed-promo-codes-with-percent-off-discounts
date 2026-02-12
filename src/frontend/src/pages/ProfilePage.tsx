@@ -1,37 +1,37 @@
 import { useState, useEffect } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile, useSaveCallerUserProfile } from '../hooks/useProfile';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useCheckAdminAccess } from '../hooks/useAdmin';
 import { useAdminRestore } from '../hooks/useAdminRestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, User, CheckCircle2, AlertCircle, Shield, RefreshCw } from 'lucide-react';
+import { Loader2, User, Shield, CheckCircle2, AlertCircle, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import LoginRequiredScreen from '../components/LoginRequiredScreen';
-import { formatErrorMessage, extractBackendError } from '../utils/errorFormatting';
+import BannedUserGate from '../components/BannedUserGate';
+import { formatErrorMessage } from '../utils/errorFormatting';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { identity, isInitializing } = useInternetIdentity();
+  const isAuthenticated = !!identity;
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const { isAdmin } = useCheckAdminAccess();
   const saveProfileMutation = useSaveCallerUserProfile();
-  const { isAdmin, isLoading: adminCheckLoading } = useCheckAdminAccess();
-  const adminRestoreMutation = useAdminRestore();
+  const restoreMutation = useAdminRestore();
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
   });
-
   const [hasChanges, setHasChanges] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [showRestoreSuccess, setShowRestoreSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const isAuthenticated = !!identity;
-
-  // Load profile data when available
+  // Initialize form with profile data
   useEffect(() => {
     if (userProfile) {
       setFormData({
@@ -51,21 +51,9 @@ export default function ProfilePage() {
         formData.phone !== userProfile.phone;
       setHasChanges(changed);
     } else {
-      setHasChanges(
-        formData.name.trim() !== '' ||
-        formData.email.trim() !== '' ||
-        formData.phone.trim() !== ''
-      );
+      setHasChanges(formData.name.trim() !== '' || formData.email.trim() !== '' || formData.phone.trim() !== '');
     }
   }, [formData, userProfile]);
-
-  // Show restore success message
-  useEffect(() => {
-    if (adminRestoreMutation.isSuccess) {
-      setShowRestoreSuccess(true);
-      setTimeout(() => setShowRestoreSuccess(false), 5000);
-    }
-  }, [adminRestoreMutation.isSuccess]);
 
   // Show loading state while checking authentication
   if (isInitializing) {
@@ -86,8 +74,10 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      setError('All fields are required');
       return;
     }
 
@@ -97,257 +87,231 @@ export default function ProfilePage() {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
       });
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 5000);
-    } catch (error: any) {
-      console.error('Failed to save profile:', error);
+      toast.success('Profile saved successfully');
+      setHasChanges(false);
+    } catch (err: any) {
+      const errorMessage = formatErrorMessage(err);
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
   const handleRestoreAdmin = async () => {
     try {
-      await adminRestoreMutation.mutateAsync();
-    } catch (error: any) {
-      console.error('Failed to restore admin access:', error);
+      await restoreMutation.mutateAsync();
+      toast.success('Admin access restored successfully');
+    } catch (err: any) {
+      const errorMessage = formatErrorMessage(err);
+      toast.error(errorMessage);
     }
   };
 
-  const handleGoToAdmin = () => {
-    window.location.hash = '/admin';
+  const handleCopyPrincipal = async () => {
+    if (!identity) return;
+    
+    try {
+      await navigator.clipboard.writeText(identity.getPrincipal().toString());
+      setCopied(true);
+      toast.success('Principal ID copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy to clipboard');
+    }
   };
 
-  const isSubmitting = saveProfileMutation.isPending;
-  const isValid = formData.name.trim() && formData.email.trim() && formData.phone.trim();
-
-  // Format error message with backend details
-  const errorMessage = saveProfileMutation.isError
-    ? (() => {
-        const backendError = extractBackendError(saveProfileMutation.error);
-        const genericMessage = 'Failed to save profile. Please try again.';
-        
-        if (backendError) {
-          return `${genericMessage} Details: ${backendError}`;
-        }
-        
-        const formattedError = formatErrorMessage(saveProfileMutation.error);
-        if (formattedError && formattedError !== 'An unknown error occurred') {
-          return `${genericMessage} Details: ${formattedError}`;
-        }
-        
-        return genericMessage;
-      })()
-    : '';
-
-  // Format admin restore error message
-  const restoreErrorMessage = adminRestoreMutation.isError
-    ? (() => {
-        const backendError = extractBackendError(adminRestoreMutation.error);
-        if (backendError) {
-          return backendError;
-        }
-        return formatErrorMessage(adminRestoreMutation.error) || 'Failed to restore admin access. Please try again.';
-      })()
-    : '';
+  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
 
   return (
     <div className="container py-8 md:py-12 max-w-2xl">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="rounded-full bg-primary/10 p-3">
-            <User className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Profile</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Manage your account information and contact details
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+          {showProfileSetup ? 'Complete Your Profile' : 'My Profile'}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          {showProfileSetup
+            ? 'Please complete your profile to continue using the platform'
+            : 'Manage your account information'}
         </p>
       </div>
 
-      {profileLoading && !isFetched ? (
-        <div className="flex items-center justify-center py-12">
+      {profileLoading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <>
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                <CardTitle>Profile Information</CardTitle>
+              </div>
               <CardDescription>
-                Update your name, email, and phone number. This information is used for order processing.
+                {showProfileSetup
+                  ? 'This information will be used for your orders and account management'
+                  : 'Update your personal information'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter your full name"
-                      disabled={isSubmitting}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="your.email@example.com"
-                      disabled={isSubmitting}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                      disabled={isSubmitting}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {saveProfileMutation.isError && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="whitespace-pre-wrap break-words">
-                      {errorMessage}
-                    </AlertDescription>
+                    <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
 
-                {showSuccessMessage && (
-                  <Alert className="border-green-500/50 bg-green-500/10">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-600">
-                      Profile saved successfully!
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex gap-3">
-                  <Button
-                    type="submit"
-                    disabled={!isValid || !hasChanges || isSubmitting}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="John Doe"
+                    disabled={saveProfileMutation.isPending}
+                  />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="john@example.com"
+                    disabled={saveProfileMutation.isPending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                    disabled={saveProfileMutation.isPending}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!hasChanges || saveProfileMutation.isPending}
+                >
+                  {saveProfileMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {showProfileSetup ? 'Complete Profile' : 'Save Changes'}
+                    </>
+                  )}
+                </Button>
               </form>
             </CardContent>
           </Card>
 
-          {/* Admin Panel Access Card */}
-          {!adminCheckLoading && isAdmin && (
-            <Card className="mt-6 border-primary/50 bg-primary/5">
+          {/* Admin Access Card */}
+          {isAdmin && (
+            <Card>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Admin Access</CardTitle>
-                    <CardDescription>
-                      You have administrator privileges
-                    </CardDescription>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <CardTitle>Admin Access</CardTitle>
                 </div>
+                <CardDescription>
+                  You have administrator privileges
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
-                  onClick={handleGoToAdmin}
+                  onClick={() => (window.location.hash = '/admin')}
                   className="w-full"
-                  variant="default"
                 >
-                  <Shield className="mr-2 h-4 w-4" />
                   Go to Admin Panel
                 </Button>
               </CardContent>
             </Card>
           )}
 
-          {/* Admin Restore Card - shown when logged in but not admin */}
-          {!adminCheckLoading && !isAdmin && (
-            <Card className="mt-6 border-amber-500/50 bg-amber-500/5">
+          {/* Admin Restore Card (for non-admin users) */}
+          {!isAdmin && (
+            <Card>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-amber-500/10 p-2">
-                    <RefreshCw className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Restore Admin Access</CardTitle>
-                    <CardDescription>
-                      If you previously had admin access, you can attempt to restore it
-                    </CardDescription>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Admin Access</CardTitle>
                 </div>
+                <CardDescription>
+                  Restore admin access if you are a designated administrator
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  This action will attempt to restore your administrator privileges. This is only available in specific recovery scenarios.
-                </p>
-
-                {adminRestoreMutation.isError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="whitespace-pre-wrap break-words">
-                      {restoreErrorMessage}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {showRestoreSuccess && (
-                  <Alert className="border-green-500/50 bg-green-500/10">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-600">
-                      Admin access restored successfully! The page will update momentarily.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
+              <CardContent>
                 <Button
                   onClick={handleRestoreAdmin}
-                  disabled={adminRestoreMutation.isPending}
-                  className="w-full"
                   variant="outline"
+                  className="w-full"
+                  disabled={restoreMutation.isPending}
                 >
-                  {adminRestoreMutation.isPending ? (
+                  {restoreMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Restoring Access...
+                      Restoring...
                     </>
                   ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Restore Admin Access
-                    </>
+                    'Restore Admin Access'
                   )}
                 </Button>
               </CardContent>
             </Card>
           )}
-        </>
+
+          {/* Principal ID Card */}
+          {identity && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Your Principal ID</CardTitle>
+                <CardDescription className="text-xs">
+                  Your unique identifier on the Internet Computer
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all">
+                    {identity.getPrincipal().toString()}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopyPrincipal}
+                    className="flex-shrink-0"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <BannedUserGate>
+      <ProfilePageContent />
+    </BannedUserGate>
   );
 }
